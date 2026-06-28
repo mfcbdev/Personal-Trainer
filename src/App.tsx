@@ -4,6 +4,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { TrainerGuard } from './components/layout/TrainerGuard';
 import { ClientGuard } from './components/layout/ClientGuard';
 import { OnboardingGuard } from './components/layout/OnboardingGuard';
+import { GuestOnly } from './components/layout/GuestOnly';
 import { TrainerShell } from './components/layout/TrainerShell';
 import { ClientShell } from './components/layout/ClientShell';
 import { RootRedirect } from './components/layout/RootRedirect';
@@ -33,9 +34,12 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/" element={<RootRedirect />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/invite/:token" element={<InvitePage />} />
+
+            <Route element={<GuestOnly />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/invite/:token" element={<InvitePage />} />
+            </Route>
 
             <Route element={<OnboardingGuard />}>
               <Route path="/onboarding" element={<OnboardingFlow />} />
