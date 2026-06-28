@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { Home, Calendar, LineChart, User } from 'lucide-react';
 import { BottomNav } from './BottomNav';
+import { TopBar } from './TopBar';
 
 const navItems = [
   { to: '/c/today', label: 'Hoy', icon: Home },
@@ -12,6 +13,7 @@ const navItems = [
 export function ClientShell() {
   return (
     <div className="flex min-h-full flex-col">
+      <TopBar />
       <main className="flex-1 px-4 py-6 pb-20">
         <Outlet />
       </main>
