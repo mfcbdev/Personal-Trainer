@@ -1,64 +1,123 @@
-import { useState } from 'react';
-import { Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { Modal } from '../ui/Modal';
-import { useExercises } from '../../hooks/useExercises';
+import { Button } from '../ui/Button';
+import { ExerciseCard } from '../exercises/ExerciseCard';
+import { ExerciseFilters, defaultExerciseFilters, type ExerciseFilterState } from '../exercises/ExerciseFilters';
+import { NumberStepper } from '../onboarding/NumberStepper';
+import { useExercises, type Exercise } from '../../hooks/useExercises';
 import { getYouTubeThumbnail } from '../../lib/youtube';
+
+export interface ExerciseQuickConfig {
+  sets: number | null;
+  reps: string | null;
+  weight: number | null;
+}
 
 interface ExercisePickerModalProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (exerciseId: string) => void;
+  onSelect: (exerciseId: string, config: ExerciseQuickConfig) => void;
 }
 
 export function ExercisePickerModal({ open, onClose, onSelect }: ExercisePickerModalProps) {
   const { exercises, loading } = useExercises();
-  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<ExerciseFilterState>(defaultExerciseFilters);
+  const [picked, setPicked] = useState<Exercise | null>(null);
+  const [sets, setSets] = useState(3);
+  const [reps, setReps] = useState('10-12');
+  const [weight, setWeight] = useState(0);
 
-  const filtered = exercises.filter((ex) => ex.name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = useMemo(() => {
+    const search = filters.search.trim().toLowerCase();
+    return exercises.filter((ex) => {
+      if (filters.zone !== 'all' && ex.zone !== filters.zone) return false;
+      if (filters.movementType !== 'all' && ex.movement_type !== filters.movementType) return false;
+      if (filters.muscleGroup !== 'all' && ex.muscle_group !== filters.muscleGroup) return false;
+      if (search && !ex.name.toLowerCase().includes(search)) return false;
+      return true;
+    });
+  }, [exercises, filters]);
+
+  function handleClose() {
+    setPicked(null);
+    setSets(3);
+    setReps('10-12');
+    setWeight(0);
+    onClose();
+  }
+
+  function handleConfirm() {
+    if (!picked) return;
+    onSelect(picked.id, { sets, reps, weight: weight || null });
+    handleClose();
+  }
+
+  if (picked) {
+    const thumb = picked.video_url ? getYouTubeThumbnail(picked.video_url) : null;
+    return (
+      <Modal open={open} onClose={handleClose} title="Configurar ejercicio">
+        <button
+          type="button"
+          onClick={() => setPicked(null)}
+          className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-50 mb-4"
+        >
+          <ArrowLeft size={16} /> Volver
+        </button>
+
+        <div className="flex items-center gap-3 mb-5">
+          <div className="h-14 w-20 shrink-0 rounded bg-zinc-800 overflow-hidden">
+            {thumb && <img src={thumb} alt="" className="h-full w-full object-cover" />}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-zinc-50">{picked.name}</p>
+            <p className="text-xs text-zinc-500">{picked.muscle_group}</p>
+          </div>
+        </div>
+
+        <div className="space-y-4 mb-6">
+          <div>
+            <label className="block text-sm text-zinc-400 mb-2">Series</label>
+            <NumberStepper value={sets} onChange={setSets} min={1} max={20} />
+          </div>
+          <div>
+            <label className="block text-sm text-zinc-400 mb-1.5">Repeticiones</label>
+            <input
+              type="text"
+              value={reps}
+              onChange={(e) => setReps(e.target.value)}
+              placeholder="10-12"
+              className="h-11 w-full rounded-lg border border-zinc-800 bg-base px-3 text-sm text-zinc-50 outline-none focus:border-accent"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-zinc-400 mb-2">Peso (kg)</label>
+            <NumberStepper value={weight} onChange={setWeight} min={0} max={500} step={2.5} suffix="kg" />
+          </div>
+        </div>
+
+        <Button type="button" size="lg" className="w-full" onClick={handleConfirm}>
+          Agregar a la sesión
+        </Button>
+      </Modal>
+    );
+  }
 
   return (
-    <Modal open={open} onClose={onClose} title="Agregar ejercicio" className="max-h-[80vh] flex flex-col">
-      <div className="relative mb-3 shrink-0">
-        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar ejercicio..."
-          className="h-11 w-full rounded-lg border border-zinc-800 bg-base pl-10 pr-4 text-sm text-zinc-50 placeholder:text-zinc-500 outline-none focus:border-accent"
-        />
-      </div>
+    <Modal open={open} onClose={handleClose} title="Agregar ejercicio">
+      <ExerciseFilters value={filters} onChange={setFilters} />
 
-      <div className="overflow-y-auto flex-1 -mx-1 px-1 space-y-1.5">
-        {loading ? (
-          <p className="text-sm text-zinc-500 text-center py-6">Cargando...</p>
-        ) : filtered.length === 0 ? (
-          <p className="text-sm text-zinc-500 text-center py-6">No se encontraron ejercicios.</p>
-        ) : (
-          filtered.map((exercise) => {
-            const thumb = exercise.video_url ? getYouTubeThumbnail(exercise.video_url) : null;
-            return (
-              <button
-                key={exercise.id}
-                type="button"
-                onClick={() => {
-                  onSelect(exercise.id);
-                  onClose();
-                }}
-                className="w-full flex items-center gap-3 rounded-lg bg-base p-2 hover:bg-zinc-800 text-left"
-              >
-                <div className="h-10 w-14 shrink-0 rounded bg-zinc-800 overflow-hidden">
-                  {thumb && <img src={thumb} alt="" className="h-full w-full object-cover" />}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-zinc-50 truncate">{exercise.name}</p>
-                  <p className="text-xs text-zinc-500 truncate">{exercise.muscle_group}</p>
-                </div>
-              </button>
-            );
-          })
-        )}
-      </div>
+      {loading ? (
+        <p className="text-sm text-zinc-500 text-center py-6">Cargando...</p>
+      ) : filtered.length === 0 ? (
+        <p className="text-sm text-zinc-500 text-center py-6">No se encontraron ejercicios.</p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {filtered.map((exercise) => (
+            <ExerciseCard key={exercise.id} exercise={exercise} onClick={() => setPicked(exercise)} />
+          ))}
+        </div>
+      )}
     </Modal>
   );
 }

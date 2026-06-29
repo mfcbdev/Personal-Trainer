@@ -44,15 +44,19 @@ export function useSessionDetail(sessionId: string | undefined) {
     await refetch();
   }
 
-  async function addExercise(exerciseId: string) {
+  async function addExercise(
+    exerciseId: string,
+    config: { sets?: number | null; reps?: string | null; weight?: number | null } = {},
+  ) {
     if (!sessionId) return;
     const nextOrder = items.length;
     const { error } = await supabase.from('session_exercises').insert({
       session_id: sessionId,
       exercise_id: exerciseId,
       order_index: nextOrder,
-      sets: 3,
-      reps: '10-12',
+      sets: config.sets ?? 3,
+      reps: config.reps ?? '10-12',
+      weight: config.weight ?? null,
       rest: '60s',
     });
     if (error) throw error;

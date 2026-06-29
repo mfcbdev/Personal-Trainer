@@ -17,11 +17,11 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4">
       <div
         className={cn(
-          'w-full sm:max-w-lg rounded-t-xl sm:rounded-xl bg-surface p-5',
+          'w-full sm:max-w-lg max-h-[85vh] flex flex-col rounded-t-xl sm:rounded-xl bg-surface p-5',
           className,
         )}
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 shrink-0">
           {title && <h2 className="font-display text-lg text-zinc-50">{title}</h2>}
           <button
             type="button"
@@ -32,7 +32,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
             <X size={20} />
           </button>
         </div>
-        {children}
+        <div className="flex-1 min-h-0 overflow-y-auto">{children}</div>
       </div>
     </div>
   );
