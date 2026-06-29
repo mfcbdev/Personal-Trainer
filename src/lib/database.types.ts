@@ -316,6 +316,11 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      seed_default_exercises: {
+        Args: { p_trainer_id: string };
+        Returns: undefined;
+      };
+    };
   };
 }
