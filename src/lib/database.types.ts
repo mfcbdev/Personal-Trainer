@@ -27,6 +27,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['profiles']['Row']> & { id: string; role: UserRole };
         Update: Partial<Database['public']['Tables']['profiles']['Row']>;
+        Relationships: [];
       };
       health_evaluation: {
         Row: {
@@ -45,6 +46,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['health_evaluation']['Row']> & { client_id: string };
         Update: Partial<Database['public']['Tables']['health_evaluation']['Row']>;
+        Relationships: [];
       };
       lifestyle_evaluation: {
         Row: {
@@ -56,10 +58,15 @@ export interface Database {
           physical_activity: FrequencyScale;
           other_activities: boolean;
           other_activities_detail: string | null;
+          daily_steps: number | null;
+          daily_active_hours: number | null;
+          sleep_quality: number | null;
+          stress: number | null;
           created_at: string;
         };
         Insert: Partial<Database['public']['Tables']['lifestyle_evaluation']['Row']> & { client_id: string };
         Update: Partial<Database['public']['Tables']['lifestyle_evaluation']['Row']>;
+        Relationships: [];
       };
       cardiovascular_evaluation: {
         Row: {
@@ -72,6 +79,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['cardiovascular_evaluation']['Row']> & { client_id: string };
         Update: Partial<Database['public']['Tables']['cardiovascular_evaluation']['Row']>;
+        Relationships: [];
       };
       body_measurements: {
         Row: {
@@ -92,6 +100,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['body_measurements']['Row']> & { client_id: string };
         Update: Partial<Database['public']['Tables']['body_measurements']['Row']>;
+        Relationships: [];
       };
       exercises: {
         Row: {
@@ -113,6 +122,7 @@ export interface Database {
           movement_type: MovementType;
         };
         Update: Partial<Database['public']['Tables']['exercises']['Row']>;
+        Relationships: [];
       };
       programs: {
         Row: {
@@ -131,6 +141,7 @@ export interface Database {
           start_date: string;
         };
         Update: Partial<Database['public']['Tables']['programs']['Row']>;
+        Relationships: [];
       };
       phases: {
         Row: {
@@ -142,6 +153,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['phases']['Row']> & { program_id: string; type: PhaseType; order: number };
         Update: Partial<Database['public']['Tables']['phases']['Row']>;
+        Relationships: [];
       };
       weeks: {
         Row: {
@@ -153,6 +165,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['weeks']['Row']> & { phase_id: string; week_number: number };
         Update: Partial<Database['public']['Tables']['weeks']['Row']>;
+        Relationships: [];
       };
       sessions: {
         Row: {
@@ -167,6 +180,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['sessions']['Row']> & { week_id: string; session_number: number };
         Update: Partial<Database['public']['Tables']['sessions']['Row']>;
+        Relationships: [];
       };
       session_exercises: {
         Row: {
@@ -187,6 +201,7 @@ export interface Database {
           exercise_id: string;
         };
         Update: Partial<Database['public']['Tables']['session_exercises']['Row']>;
+        Relationships: [];
       };
       set_logs: {
         Row: {
@@ -204,6 +219,7 @@ export interface Database {
           set_number: number;
         };
         Update: Partial<Database['public']['Tables']['set_logs']['Row']>;
+        Relationships: [];
       };
       progressions: {
         Row: {
@@ -224,6 +240,7 @@ export interface Database {
           week_number: number;
         };
         Update: Partial<Database['public']['Tables']['progressions']['Row']>;
+        Relationships: [];
       };
       weekly_tracking: {
         Row: {
@@ -250,6 +267,7 @@ export interface Database {
           week_start_date: string;
         };
         Update: Partial<Database['public']['Tables']['weekly_tracking']['Row']>;
+        Relationships: [];
       };
       daily_log: {
         Row: {
@@ -265,6 +283,7 @@ export interface Database {
           day_date: string;
         };
         Update: Partial<Database['public']['Tables']['daily_log']['Row']>;
+        Relationships: [];
       };
       hr_zones: {
         Row: {
@@ -280,6 +299,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['hr_zones']['Row']> & { client_id: string; zone_name: string };
         Update: Partial<Database['public']['Tables']['hr_zones']['Row']>;
+        Relationships: [];
       };
       subscriptions: {
         Row: {
@@ -292,7 +312,10 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['subscriptions']['Row']> & { trainer_id: string };
         Update: Partial<Database['public']['Tables']['subscriptions']['Row']>;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
   };
 }

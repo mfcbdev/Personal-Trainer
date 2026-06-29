@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { Database, UserRole } from '../lib/database.types';
@@ -19,6 +19,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, options: SignUpOptions) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -41,19 +42,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    setProfile(data);
+  }, []);
+
   useEffect(() => {
     if (!session?.user) {
       setProfile(null);
       return;
     }
+    fetchProfile(session.user.id);
+  }, [session?.user, fetchProfile]);
 
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .single()
-      .then(({ data }) => setProfile(data));
-  }, [session?.user]);
+  const refreshProfile = useCallback(async () => {
+    if (session?.user) await fetchProfile(session.user.id);
+  }, [session?.user, fetchProfile]);
 
   async function signIn(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -82,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user: session?.user ?? null, session, profile, loading, signIn, signUp, signOut }}
+      value={{ user: session?.user ?? null, session, profile, loading, signIn, signUp, signOut, refreshProfile }}
     >
       {children}
     </AuthContext.Provider>
