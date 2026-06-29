@@ -18,6 +18,7 @@ import Dashboard from './pages/trainer/Dashboard';
 import ClientList from './pages/trainer/ClientList';
 import ClientDetail from './pages/trainer/ClientDetail';
 import ProgramEditor from './pages/trainer/ProgramEditor';
+import SessionEditor from './pages/trainer/SessionEditor';
 import ExerciseLibrary from './pages/trainer/ExerciseLibrary';
 import TrainerSettings from './pages/trainer/TrainerSettings';
 
@@ -50,8 +51,8 @@ function App() {
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="clients" element={<ClientList />} />
                 <Route path="clients/:id" element={<ClientDetail />} />
-                <Route path="clients/:id/program/new" element={<ProgramEditor />} />
                 <Route path="clients/:id/program/:pid" element={<ProgramEditor />} />
+                <Route path="clients/:id/program/:pid/session/:sid" element={<SessionEditor />} />
                 <Route path="exercises" element={<ExerciseLibrary />} />
                 <Route path="settings" element={<TrainerSettings />} />
               </Route>

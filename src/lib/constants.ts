@@ -8,6 +8,13 @@ export const PHASE_LABELS: Record<GrowPhase, string> = {
   W: 'Definición',
 };
 
+export const PHASE_COLORS: Record<GrowPhase, { bg: string; text: string }> = {
+  G: { bg: 'bg-emerald-500/15', text: 'text-emerald-400' },
+  R: { bg: 'bg-sky-500/15', text: 'text-sky-400' },
+  O: { bg: 'bg-amber-500/15', text: 'text-amber-400' },
+  W: { bg: 'bg-fuchsia-500/15', text: 'text-fuchsia-400' },
+};
+
 export const MUSCLE_GROUPS = [
   'Pecho',
   'Hombros',
