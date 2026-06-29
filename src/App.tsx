@@ -27,6 +27,7 @@ import CalendarPage from './pages/client/CalendarPage';
 import SessionPage from './pages/client/SessionPage';
 import ProgressPage from './pages/client/ProgressPage';
 import ProfilePage from './pages/client/ProfilePage';
+import TrackingPage from './pages/client/TrackingPage';
 
 function App() {
   return (
@@ -64,6 +65,7 @@ function App() {
                 <Route path="calendar" element={<CalendarPage />} />
                 <Route path="session/:id" element={<SessionPage />} />
                 <Route path="progress" element={<ProgressPage />} />
+                <Route path="tracking" element={<TrackingPage />} />
                 <Route path="profile" element={<ProfilePage />} />
               </Route>
             </Route>

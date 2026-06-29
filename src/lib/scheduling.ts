@@ -27,6 +27,10 @@ export function getCurrentWeekStart(): Date {
   return startOfWeek(new Date(), { weekStartsOn: 1 });
 }
 
+export function getMondayOf(date: Date): Date {
+  return startOfWeek(date, { weekStartsOn: 1 });
+}
+
 export function parseRestSeconds(rest: string | null): number {
   if (!rest) return 60;
   const match = rest.match(/(\d+)/);
