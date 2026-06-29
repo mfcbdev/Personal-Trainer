@@ -1,4 +1,4 @@
-import { addDays, format, parseISO } from 'date-fns';
+import { addDays, format, parseISO, startOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -21,4 +21,22 @@ export function formatShortDate(date: Date): string {
 
 export function toISODate(date: Date): string {
   return format(date, 'yyyy-MM-dd');
+}
+
+export function getCurrentWeekStart(): Date {
+  return startOfWeek(new Date(), { weekStartsOn: 1 });
+}
+
+export function parseRestSeconds(rest: string | null): number {
+  if (!rest) return 60;
+  const match = rest.match(/(\d+)/);
+  return match ? Number(match[1]) : 60;
+}
+
+export function estimateSessionMinutes(items: { sets: number | null; rest: string | null }[]): number {
+  const totalSeconds = items.reduce((sum, item) => {
+    const sets = item.sets ?? 3;
+    return sum + sets * (45 + parseRestSeconds(item.rest));
+  }, 0);
+  return Math.round(totalSeconds / 60);
 }
