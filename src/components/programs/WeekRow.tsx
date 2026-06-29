@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { SessionCard } from './SessionCard';
+import { formatShortDate } from '../../lib/scheduling';
 import type { WeekWithSessions, SessionWithCount } from '../../hooks/useProgramBuilder';
 
 interface WeekRowProps {
   week: WeekWithSessions;
+  weekStart: Date;
   allWeeks: { id: string; label: string }[];
   onToggleDeload: (isDeload: boolean) => void;
   onAddSession: () => void;
@@ -13,10 +15,12 @@ interface WeekRowProps {
   onDuplicateSession: (session: SessionWithCount) => void;
   onDeleteSession: (session: SessionWithCount) => void;
   onDuplicateWeek: (targetWeekId: string) => void;
+  onSetSessionDay: (session: SessionWithCount, isoDate: string) => void;
 }
 
 export function WeekRow({
   week,
+  weekStart,
   allWeeks,
   onToggleDeload,
   onAddSession,
@@ -24,6 +28,7 @@ export function WeekRow({
   onDuplicateSession,
   onDeleteSession,
   onDuplicateWeek,
+  onSetSessionDay,
 }: WeekRowProps) {
   const [duplicateTarget, setDuplicateTarget] = useState('');
   const otherWeeks = allWeeks.filter((w) => w.id !== week.id);
@@ -33,6 +38,7 @@ export function WeekRow({
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <h3 className="text-sm font-semibold text-zinc-50">Semana {week.week_number}</h3>
+          <span className="text-xs text-zinc-500 capitalize">{formatShortDate(weekStart)}</span>
           {week.is_deload && <span className="text-xs text-zinc-500">Deload</span>}
         </div>
         <div className="flex items-center gap-3">
@@ -81,9 +87,11 @@ export function WeekRow({
           <SessionCard
             key={session.id}
             session={session}
+            weekStart={weekStart}
             onClick={() => onSessionClick(session)}
             onDuplicate={() => onDuplicateSession(session)}
             onDelete={() => onDeleteSession(session)}
+            onSetDay={(isoDate) => onSetSessionDay(session, isoDate)}
           />
         ))}
         <button

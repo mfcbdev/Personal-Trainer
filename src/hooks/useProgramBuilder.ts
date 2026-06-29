@@ -107,6 +107,12 @@ export function useProgramBuilder(programId: string | undefined) {
     await refetch();
   }
 
+  async function setSessionDate(sessionId: string, scheduledDate: string | null) {
+    const { error } = await supabase.from('sessions').update({ scheduled_date: scheduledDate }).eq('id', sessionId);
+    if (error) throw error;
+    await refetch();
+  }
+
   async function deleteSession(sessionId: string) {
     const { error } = await supabase.from('sessions').delete().eq('id', sessionId);
     if (error) throw error;
@@ -197,6 +203,7 @@ export function useProgramBuilder(programId: string | undefined) {
     refetch,
     toggleDeload,
     addSession,
+    setSessionDate,
     deleteSession,
     duplicateSession,
     duplicateWeek,

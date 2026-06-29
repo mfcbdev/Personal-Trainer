@@ -8,6 +8,7 @@ import { PhaseTabs } from '../../components/programs/PhaseTabs';
 import { WeekRow } from '../../components/programs/WeekRow';
 import { useProgramBuilder, type SessionWithCount } from '../../hooks/useProgramBuilder';
 import { useToast } from '../../contexts/ToastContext';
+import { getWeekStartDate } from '../../lib/scheduling';
 import type { GrowPhase } from '../../lib/constants';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -20,7 +21,7 @@ export default function ProgramEditor() {
   const { id: clientId, pid: programId } = useParams<{ id: string; pid: string }>();
   const navigate = useNavigate();
   const { showError, showSuccess } = useToast();
-  const { data, loading, toggleDeload, addSession, deleteSession, duplicateSession, duplicateWeek } =
+  const { data, loading, toggleDeload, addSession, setSessionDate, deleteSession, duplicateSession, duplicateWeek } =
     useProgramBuilder(programId);
   const [activePhase, setActivePhase] = useState<GrowPhase>('G');
 
@@ -60,28 +61,35 @@ export default function ProgramEditor() {
 
       <PhaseTabs value={activePhase} onChange={setActivePhase} />
 
-      {phase?.weeks.map((week) => (
-        <WeekRow
-          key={week.id}
-          week={week}
-          allWeeks={allWeeks}
-          onToggleDeload={(isDeload) => handleAction(() => toggleDeload(week.id, isDeload))}
-          onAddSession={() =>
-            handleAction(() => addSession(week.id, (week.sessions.at(-1)?.session_number ?? 0) + 1))
-          }
-          onSessionClick={handleSessionClick}
-          onDuplicateSession={(session) =>
-            handleAction(() => duplicateSession(session), 'Sesión duplicada.')
-          }
-          onDeleteSession={(session) => {
-            if (!confirm(`¿Eliminar sesión ${session.session_number}?`)) return;
-            handleAction(() => deleteSession(session.id));
-          }}
-          onDuplicateWeek={(targetWeekId) =>
-            handleAction(() => duplicateWeek(week.id, targetWeekId), 'Semana duplicada.')
-          }
-        />
-      ))}
+      {phase &&
+        phase.weeks.map((week) => (
+          <WeekRow
+            key={week.id}
+            week={week}
+            weekStart={getWeekStartDate(data.start_date, phase.order, week.week_number)}
+            allWeeks={allWeeks}
+            onToggleDeload={(isDeload) => handleAction(() => toggleDeload(week.id, isDeload))}
+            onAddSession={() =>
+              handleAction(() => addSession(week.id, (week.sessions.at(-1)?.session_number ?? 0) + 1))
+            }
+            onSessionClick={handleSessionClick}
+            onDuplicateSession={(session) =>
+              handleAction(() => duplicateSession(session), 'Sesión duplicada.')
+            }
+            onDeleteSession={(session) => {
+              if (!confirm(`¿Eliminar sesión ${session.session_number}?`)) return;
+              handleAction(() => deleteSession(session.id));
+            }}
+            onDuplicateWeek={(targetWeekId) =>
+              handleAction(() => duplicateWeek(week.id, targetWeekId), 'Semana duplicada.')
+            }
+            onSetSessionDay={(session, isoDate) =>
+              handleAction(() =>
+                setSessionDate(session.id, session.scheduled_date === isoDate ? null : isoDate),
+              )
+            }
+          />
+        ))}
 
       <div className="mt-6">
         <Button type="button" variant="secondary" onClick={() => navigate(`/t/clients/${clientId}`)}>
