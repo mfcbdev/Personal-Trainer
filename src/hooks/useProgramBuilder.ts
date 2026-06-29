@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { getWeekStartDate, getDateForWeekday, toISODate } from '../lib/scheduling';
 import type { Database } from '../lib/database.types';
 
 type Program = Database['public']['Tables']['programs']['Row'];
@@ -197,6 +198,37 @@ export function useProgramBuilder(programId: string | undefined) {
     await refetch();
   }
 
+  async function activateProgram() {
+    if (!data) return;
+
+    const { error: demoteError } = await supabase
+      .from('programs')
+      .update({ status: 'completed' })
+      .eq('client_id', data.client_id)
+      .eq('status', 'active')
+      .neq('id', data.id);
+    if (demoteError) throw demoteError;
+
+    const { error: activateError } = await supabase.from('programs').update({ status: 'active' }).eq('id', data.id);
+    if (activateError) throw activateError;
+
+    for (const phase of data.phases) {
+      for (const week of phase.weeks) {
+        const weekStart = getWeekStartDate(data.start_date, phase.order, week.week_number);
+        const total = week.sessions.length;
+        for (const session of week.sessions) {
+          if (session.scheduled_date) continue;
+          const dayIndex = total > 0 ? Math.floor(((session.session_number - 1) * 7) / Math.max(total, 1)) : 0;
+          const isoDate = toISODate(getDateForWeekday(weekStart, Math.min(dayIndex, 6)));
+          const { error } = await supabase.from('sessions').update({ scheduled_date: isoDate }).eq('id', session.id);
+          if (error) throw error;
+        }
+      }
+    }
+
+    await refetch();
+  }
+
   return {
     data,
     loading,
@@ -207,5 +239,6 @@ export function useProgramBuilder(programId: string | undefined) {
     deleteSession,
     duplicateSession,
     duplicateWeek,
+    activateProgram,
   };
 }
