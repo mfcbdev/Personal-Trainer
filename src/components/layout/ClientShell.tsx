@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
-import { Home, Calendar, LineChart, User } from 'lucide-react';
+import { Home, Calendar, LineChart, User, ClipboardList } from 'lucide-react';
 import { BottomNav } from './BottomNav';
+import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 
 const navItems = [
@@ -10,13 +11,18 @@ const navItems = [
   { to: '/c/profile', label: 'Perfil', icon: User },
 ];
 
+const sidebarItems = [...navItems, { to: '/c/tracking', label: 'Seguimiento', icon: ClipboardList }];
+
 export function ClientShell() {
   return (
     <div className="flex min-h-full flex-col">
       <TopBar />
-      <main className="flex-1 px-4 py-6 pb-20">
-        <Outlet />
-      </main>
+      <div className="flex flex-1">
+        <Sidebar items={sidebarItems} />
+        <main className="flex-1 px-4 py-6 pb-20 sm:pb-6 sm:px-8">
+          <Outlet />
+        </main>
+      </div>
       <BottomNav items={navItems} />
     </div>
   );
