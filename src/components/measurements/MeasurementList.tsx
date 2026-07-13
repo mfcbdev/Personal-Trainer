@@ -4,7 +4,7 @@ import type { BodyMeasurement } from '../../hooks/useMeasurements';
 
 interface MeasurementListProps {
   measurements: BodyMeasurement[];
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 function formatDelta(current: number | null, baseline: number | null) {
@@ -40,16 +40,18 @@ export function MeasurementList({ measurements, onDelete }: MeasurementListProps
                 <p className="text-sm font-medium text-zinc-50">{m.measured_at}</p>
                 {isBaseline && <p className="text-xs text-zinc-500">Medición inicial</p>}
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm('¿Eliminar esta medición?')) onDelete(m.id);
-                }}
-                className="text-zinc-500 hover:text-red-400"
-                aria-label="Eliminar"
-              >
-                <Trash2 size={16} />
-              </button>
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm('¿Eliminar esta medición?')) onDelete(m.id);
+                  }}
+                  className="text-zinc-500 hover:text-red-400"
+                  aria-label="Eliminar"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
             </div>
             <div className="grid grid-cols-4 gap-2 text-sm">
               <MetricCell label="Peso" value={m.weight} suffix="kg" delta={weightDelta} />
