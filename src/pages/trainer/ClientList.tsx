@@ -34,9 +34,15 @@ export default function ClientList() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-zinc-500 text-center py-10">
-          {clients.length === 0 ? 'Aún no tienes clientes. Invítalos desde Ajustes.' : 'No se encontraron clientes.'}
-        </p>
+        clients.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-sm font-medium text-zinc-200 mb-1">Aún no tienes clientes</p>
+            <p className="text-sm text-zinc-500 mb-4">Copia tu enlace de invitación desde el Dashboard o Ajustes para que un cliente cree su cuenta vinculada.</p>
+            <Link to="/t/dashboard" className="text-sm text-accent font-medium">Ir al Dashboard →</Link>
+          </div>
+        ) : (
+          <p className="text-sm text-zinc-500 text-center py-10">No se encontraron clientes.</p>
+        )
       ) : (
         <div className="space-y-3">
           {filtered.map((client) => (

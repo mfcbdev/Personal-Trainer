@@ -22,4 +22,5 @@ body {
   @apply bg-base text-zinc-50 font-sans antialiased;
   margin: 0;
   overscroll-behavior-y: contain;
+  padding-bottom: env(safe-area-inset-bottom);
 }

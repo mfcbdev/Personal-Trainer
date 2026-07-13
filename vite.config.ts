@@ -10,14 +10,20 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeAssets: ['icon.svg'],
       manifest: {
         name: 'GROW',
         short_name: 'GROW',
-        description: 'Periodized training programs for personal trainers and clients',
+        description: 'Programas de entrenamiento periodizados para entrenadores y clientes',
         theme_color: '#0D0D0F',
         background_color: '#0D0D0F',
         display: 'standalone',
-        icons: [],
+        orientation: 'portrait',
+        lang: 'es',
+        categories: ['fitness', 'health', 'lifestyle'],
+        icons: [
+          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
+        ],
       },
     }),
   ],
