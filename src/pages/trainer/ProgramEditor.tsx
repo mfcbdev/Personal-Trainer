@@ -99,13 +99,13 @@ export default function ProgramEditor() {
 
       <PhaseTabs value={activePhase} onChange={setActivePhase} />
 
-      <div className="flex gap-2 mb-5 border-b border-zinc-800">
+      <div className="flex gap-2 mb-5 border-b border-zinc-800 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
         {(['plan', 'progression'] as const).map((v) => (
           <button
             key={v}
             type="button"
             onClick={() => setView(v)}
-            className={`px-1 pb-2.5 text-sm font-medium border-b-2 -mb-px ${
+            className={`shrink-0 whitespace-nowrap px-1 pb-2.5 text-sm font-medium border-b-2 -mb-px ${
               view === v ? 'border-accent text-zinc-50' : 'border-transparent text-zinc-500'
             }`}
           >

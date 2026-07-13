@@ -17,7 +17,7 @@ export function TrainerShell() {
       <TopBar />
       <div className="flex flex-1">
         <Sidebar items={navItems} />
-        <main className="flex-1 px-4 py-6 pb-20 sm:pb-6 sm:px-8">
+        <main className="flex-1 min-w-0 px-4 py-6 pb-20 sm:pb-6 sm:px-8">
           <Outlet />
         </main>
       </div>

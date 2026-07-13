@@ -50,13 +50,13 @@ export default function ClientDetail() {
     <div>
       <PageHeader title={client?.full_name ?? 'Cliente'} />
 
-      <div className="flex gap-2 mb-5 border-b border-zinc-800">
+      <div className="flex gap-2 mb-5 border-b border-zinc-800 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
         {TABS.map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            className={`px-1 pb-2.5 text-sm font-medium border-b-2 -mb-px ${
+            className={`shrink-0 whitespace-nowrap px-1 pb-2.5 text-sm font-medium border-b-2 -mb-px ${
               tab === t ? 'border-accent text-zinc-50' : 'border-transparent text-zinc-500'
             }`}
           >
