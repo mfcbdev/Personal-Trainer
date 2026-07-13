@@ -7,11 +7,20 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ProgramCreateModal } from '../../components/programs/ProgramCreateModal';
+import { MeasurementFormModal } from '../../components/measurements/MeasurementFormModal';
+import { MeasurementList } from '../../components/measurements/MeasurementList';
 import { useClient } from '../../hooks/useClients';
 import { useClientPrograms } from '../../hooks/usePrograms';
+import { useMeasurements } from '../../hooks/useMeasurements';
 
-const TABS = ['overview', 'program'] as const;
+const TABS = ['overview', 'program', 'measurements'] as const;
 type Tab = (typeof TABS)[number];
+
+const TAB_LABELS: Record<Tab, string> = {
+  overview: 'Resumen',
+  program: 'Programa',
+  measurements: 'Mediciones',
+};
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Borrador',
@@ -24,8 +33,10 @@ export default function ClientDetail() {
   const navigate = useNavigate();
   const { client, loading: clientLoading } = useClient(id);
   const { programs, loading: programsLoading, createProgram } = useClientPrograms(id);
+  const { measurements, loading: measurementsLoading, createMeasurement, deleteMeasurement } = useMeasurements(id);
   const [tab, setTab] = useState<Tab>('overview');
   const [createOpen, setCreateOpen] = useState(false);
+  const [measurementOpen, setMeasurementOpen] = useState(false);
 
   return (
     <div>
@@ -41,7 +52,7 @@ export default function ClientDetail() {
               tab === t ? 'border-accent text-zinc-50' : 'border-transparent text-zinc-500'
             }`}
           >
-            {t === 'overview' ? 'Resumen' : 'Programa'}
+            {TAB_LABELS[t]}
           </button>
         ))}
       </div>
@@ -99,6 +110,18 @@ export default function ClientDetail() {
         </div>
       )}
 
+      {tab === 'measurements' && (
+        <div>
+          <div className="flex justify-end mb-3">
+            <Button type="button" onClick={() => setMeasurementOpen(true)} disabled={!client}>
+              <Plus size={18} className="mr-1.5" /> Nueva medición
+            </Button>
+          </div>
+
+          {measurementsLoading ? <Skeleton className="h-20" /> : <MeasurementList measurements={measurements} onDelete={deleteMeasurement} />}
+        </div>
+      )}
+
       {id && (
         <ProgramCreateModal
           open={createOpen}
@@ -108,6 +131,15 @@ export default function ClientDetail() {
             setCreateOpen(false);
             navigate(`/t/clients/${id}/program/${program.id}`);
           }}
+        />
+      )}
+
+      {client && (
+        <MeasurementFormModal
+          open={measurementOpen}
+          onClose={() => setMeasurementOpen(false)}
+          client={client}
+          onSubmit={createMeasurement}
         />
       )}
     </div>
