@@ -9,17 +9,23 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { ProgramCreateModal } from '../../components/programs/ProgramCreateModal';
 import { MeasurementFormModal } from '../../components/measurements/MeasurementFormModal';
 import { MeasurementList } from '../../components/measurements/MeasurementList';
+import { TrackingTrendChart } from '../../components/dashboard/TrackingTrendChart';
+import { HRZonesTable } from '../../components/dashboard/HRZonesTable';
 import { useClient } from '../../hooks/useClients';
 import { useClientPrograms } from '../../hooks/usePrograms';
 import { useMeasurements } from '../../hooks/useMeasurements';
+import { useClientTrackingHistory } from '../../hooks/useClientTrackingHistory';
+import { useCardioEvaluation } from '../../hooks/useCardioEvaluation';
 
-const TABS = ['overview', 'program', 'measurements'] as const;
+const TABS = ['overview', 'program', 'measurements', 'tracking', 'zones'] as const;
 type Tab = (typeof TABS)[number];
 
 const TAB_LABELS: Record<Tab, string> = {
   overview: 'Resumen',
   program: 'Programa',
   measurements: 'Mediciones',
+  tracking: 'Seguimiento',
+  zones: 'Zonas FC',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -34,6 +40,8 @@ export default function ClientDetail() {
   const { client, loading: clientLoading } = useClient(id);
   const { programs, loading: programsLoading, createProgram } = useClientPrograms(id);
   const { measurements, loading: measurementsLoading, createMeasurement, deleteMeasurement } = useMeasurements(id);
+  const { rows: trackingRows, loading: trackingLoading } = useClientTrackingHistory(id);
+  const { evaluation, loading: evalLoading, refetch: refetchEval } = useCardioEvaluation(id);
   const [tab, setTab] = useState<Tab>('overview');
   const [createOpen, setCreateOpen] = useState(false);
   const [measurementOpen, setMeasurementOpen] = useState(false);
@@ -120,6 +128,19 @@ export default function ClientDetail() {
 
           {measurementsLoading ? <Skeleton className="h-20" /> : <MeasurementList measurements={measurements} onDelete={deleteMeasurement} />}
         </div>
+      )}
+
+      {tab === 'tracking' && (
+        <Card>
+          <h3 className="text-xs font-medium text-zinc-500 uppercase mb-3">Peso, cansancio y motivación</h3>
+          {trackingLoading ? <Skeleton className="h-48" /> : <TrackingTrendChart rows={trackingRows} />}
+        </Card>
+      )}
+
+      {tab === 'zones' && client && (
+        evalLoading ? <Skeleton className="h-48" /> : (
+          <HRZonesTable client={client} evaluation={evaluation} onSaved={refetchEval} />
+        )
       )}
 
       {id && (
