@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 interface Toast {
   id: number;
@@ -17,8 +17,22 @@ let nextId = 0;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
+
+  useEffect(() => {
+    const currentTimers = timers.current;
+    return () => {
+      for (const handle of currentTimers.values()) clearTimeout(handle);
+      currentTimers.clear();
+    };
+  }, []);
 
   const dismiss = useCallback((id: number) => {
+    const handle = timers.current.get(id);
+    if (handle) {
+      clearTimeout(handle);
+      timers.current.delete(id);
+    }
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
@@ -26,7 +40,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     (message: string, variant: Toast['variant']) => {
       const id = nextId++;
       setToasts((prev) => [...prev, { id, message, variant }]);
-      setTimeout(() => dismiss(id), 4000);
+      const handle = setTimeout(() => dismiss(id), 4000);
+      timers.current.set(id, handle);
     },
     [dismiss],
   );

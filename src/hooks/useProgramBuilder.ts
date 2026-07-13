@@ -7,6 +7,7 @@ type Program = Database['public']['Tables']['programs']['Row'];
 type Phase = Database['public']['Tables']['phases']['Row'];
 type Week = Database['public']['Tables']['weeks']['Row'];
 type Session = Database['public']['Tables']['sessions']['Row'];
+type SessionExerciseRow = Database['public']['Tables']['session_exercises']['Row'];
 
 export interface SessionWithCount extends Session {
   exerciseCount: number;
@@ -159,40 +160,69 @@ export function useProgramBuilder(programId: string | undefined) {
     const sourceWeek = data?.phases.flatMap((p) => p.weeks).find((w) => w.id === sourceWeekId);
     if (!sourceWeek) return;
 
-    const targetWeek = data?.phases.flatMap((p) => p.weeks).find((w) => w.id === targetWeekId);
-    if (targetWeek) {
-      for (const session of targetWeek.sessions) {
-        await supabase.from('sessions').delete().eq('id', session.id);
+    // Not truly atomic (no server-side transaction) — insert new sessions first so a mid-op
+    // failure leaves the target week intact rather than empty. Delete the old ones only after
+    // the copy succeeds.
+    const sourceSessionIds = sourceWeek.sessions.map((s) => s.id);
+    const { data: sourceExercises, error: sourceExError } = sourceSessionIds.length
+      ? await supabase.from('session_exercises').select('*').in('session_id', sourceSessionIds)
+      : { data: [] as SessionExerciseRow[], error: null };
+    if (sourceExError) throw sourceExError;
+
+    const newSessions: { source_id: string; row: { week_id: string; session_number: number; name: string | null } }[] =
+      sourceWeek.sessions.map((s) => ({
+        source_id: s.id,
+        row: { week_id: targetWeekId, session_number: s.session_number, name: s.name },
+      }));
+
+    if (newSessions.length === 0) {
+      // Just clear the target if the source is empty.
+      const targetWeek = data?.phases.flatMap((p) => p.weeks).find((w) => w.id === targetWeekId);
+      const targetSessionIds = targetWeek?.sessions.map((s) => s.id) ?? [];
+      if (targetSessionIds.length > 0) {
+        const { error: delError } = await supabase.from('sessions').delete().in('id', targetSessionIds);
+        if (delError) throw delError;
       }
+      await refetch();
+      return;
     }
 
-    for (const session of sourceWeek.sessions) {
-      const { data: newSession, error } = await supabase
-        .from('sessions')
-        .insert({ week_id: targetWeekId, session_number: session.session_number, name: session.name })
-        .select()
-        .single();
-      if (error) throw error;
+    const { data: insertedSessions, error: insertError } = await supabase
+      .from('sessions')
+      .insert(newSessions.map((n) => n.row))
+      .select();
+    if (insertError) throw insertError;
 
-      const { data: exercises } = await supabase
-        .from('session_exercises')
-        .select('*')
-        .eq('session_id', session.id);
+    // Map source session id -> new session id by matching session_number (unique within a week).
+    const newBySessionNumber = new Map(insertedSessions.map((s) => [s.session_number, s.id]));
+    const exerciseCopies = (sourceExercises ?? []).map((ex) => {
+      const sourceSession = sourceWeek.sessions.find((s) => s.id === ex.session_id);
+      const newSessionId = sourceSession ? newBySessionNumber.get(sourceSession.session_number) : null;
+      if (!newSessionId) return null;
+      return {
+        session_id: newSessionId,
+        exercise_id: ex.exercise_id,
+        order_index: ex.order_index,
+        sets: ex.sets,
+        reps: ex.reps,
+        weight: ex.weight,
+        rir_rpe: ex.rir_rpe,
+        rest: ex.rest,
+        notes: ex.notes,
+      };
+    }).filter((c): c is NonNullable<typeof c> => c !== null);
 
-      if (exercises && exercises.length > 0) {
-        const copies = exercises.map((ex) => ({
-          session_id: newSession.id,
-          exercise_id: ex.exercise_id,
-          order_index: ex.order_index,
-          sets: ex.sets,
-          reps: ex.reps,
-          weight: ex.weight,
-          rir_rpe: ex.rir_rpe,
-          rest: ex.rest,
-          notes: ex.notes,
-        }));
-        await supabase.from('session_exercises').insert(copies);
-      }
+    if (exerciseCopies.length > 0) {
+      const { error: copyError } = await supabase.from('session_exercises').insert(exerciseCopies);
+      if (copyError) throw copyError;
+    }
+
+    // Only now delete the old target sessions; ON DELETE CASCADE takes care of their exercises.
+    const targetWeek = data?.phases.flatMap((p) => p.weeks).find((w) => w.id === targetWeekId);
+    const targetSessionIds = targetWeek?.sessions.map((s) => s.id) ?? [];
+    if (targetSessionIds.length > 0) {
+      const { error: delError } = await supabase.from('sessions').delete().in('id', targetSessionIds);
+      if (delError) throw delError;
     }
 
     await refetch();

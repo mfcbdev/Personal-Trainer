@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -9,6 +9,13 @@ export default function TrainerSettings() {
   const { user } = useAuth();
   const { showSuccess } = useToast();
   const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    };
+  }, []);
 
   const inviteLink = user ? `${window.location.origin}/invite/${user.id}` : '';
 
@@ -17,7 +24,8 @@ export default function TrainerSettings() {
     await navigator.clipboard.writeText(inviteLink);
     setCopied(true);
     showSuccess('Enlace copiado al portapapeles.');
-    setTimeout(() => setCopied(false), 2000);
+    if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    copiedTimer.current = setTimeout(() => setCopied(false), 2000);
   }
 
   return (

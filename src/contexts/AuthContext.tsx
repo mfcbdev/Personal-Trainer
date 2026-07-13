@@ -30,16 +30,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!cancelled) setSession(data.session);
+      } catch (error) {
+        console.error('Failed to load auth session', error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
     });
 
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   const fetchProfile = useCallback(async (userId: string) => {
