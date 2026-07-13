@@ -27,7 +27,9 @@ export function CatalogCard({ exercise, onClick }: CatalogCardProps) {
         )}
       </div>
       <div className="p-3">
-        <p className="text-sm font-medium text-zinc-50 line-clamp-2 mb-2 capitalize">{exercise.name}</p>
+        <p className="text-sm font-medium text-zinc-50 line-clamp-2 mb-2 capitalize">
+          {exercise.name_es ?? exercise.name}
+        </p>
         <div className="flex flex-wrap gap-1.5">
           <Badge variant="accent">{exercise.target}</Badge>
           <Badge>{exercise.equipment}</Badge>

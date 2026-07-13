@@ -11,6 +11,7 @@ export type CatalogListRow = Pick<
   CatalogRow,
   | 'id'
   | 'name'
+  | 'name_es'
   | 'category'
   | 'equipment'
   | 'target'
@@ -38,7 +39,7 @@ export const defaultCatalogFilters: CatalogFilterState = {
 };
 
 const LIST_COLUMNS =
-  'id, name, category, equipment, target, muscle_group, zone, movement_type, image_url, gif_url';
+  'id, name, name_es, category, equipment, target, muscle_group, zone, movement_type, image_url, gif_url';
 
 export function useExercisesCatalog() {
   const [rows, setRows] = useState<CatalogListRow[]>([]);

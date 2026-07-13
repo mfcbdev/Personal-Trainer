@@ -36,7 +36,7 @@ export function CatalogDetailModal({ catalogId, onClose, onImport, importing }: 
   }
 
   return (
-    <Modal open onClose={onClose} title={data?.name ?? 'Ejercicio'}>
+    <Modal open onClose={onClose} title={data ? (data.name_es ?? data.name) : 'Ejercicio'}>
       {loading || !data ? (
         <div className="space-y-3">
           <Skeleton className="aspect-video" />

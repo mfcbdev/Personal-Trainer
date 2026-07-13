@@ -29,7 +29,11 @@ export default function ExerciseCatalog() {
       if (filters.movementType !== 'all' && r.movement_type !== filters.movementType) return false;
       if (filters.category !== 'all' && r.category !== filters.category) return false;
       if (filters.equipment !== 'all' && r.equipment !== filters.equipment) return false;
-      if (search && !r.name.toLowerCase().includes(search)) return false;
+      if (search) {
+        const en = r.name.toLowerCase();
+        const es = (r.name_es ?? '').toLowerCase();
+        if (!en.includes(search) && !es.includes(search)) return false;
+      }
       return true;
     });
   }, [rows, filters]);
