@@ -10,8 +10,8 @@ import type { Exercise } from '../../hooks/useExercises';
 interface ExerciseDetailModalProps {
   exercise: Exercise | null;
   onClose: () => void;
-  onEdit: (exercise: Exercise) => void;
-  onDelete: (exercise: Exercise) => Promise<void>;
+  onEdit?: (exercise: Exercise) => void;
+  onDelete?: (exercise: Exercise) => Promise<void>;
 }
 
 export function ExerciseDetailModal({ exercise, onClose, onEdit, onDelete }: ExerciseDetailModalProps) {
@@ -22,6 +22,7 @@ export function ExerciseDetailModal({ exercise, onClose, onEdit, onDelete }: Exe
   const embedUrl = current.video_url ? getYouTubeEmbedUrl(current.video_url) : null;
 
   async function handleDelete() {
+    if (!onDelete) return;
     if (!confirm(`¿Eliminar "${current.name}"?`)) return;
     setDeleting(true);
     try {
@@ -31,6 +32,8 @@ export function ExerciseDetailModal({ exercise, onClose, onEdit, onDelete }: Exe
       setDeleting(false);
     }
   }
+
+  const showActions = onEdit || onDelete;
 
   return (
     <Modal open onClose={onClose} title={exercise.name}>
@@ -54,14 +57,20 @@ export function ExerciseDetailModal({ exercise, onClose, onEdit, onDelete }: Exe
 
       {exercise.notes && <p className="text-sm text-zinc-400 mb-4 whitespace-pre-wrap">{exercise.notes}</p>}
 
-      <div className="flex gap-2">
-        <Button type="button" variant="secondary" className="flex-1" onClick={() => onEdit(exercise)}>
-          <Pencil size={16} className="mr-2" /> Editar
-        </Button>
-        <Button type="button" variant="secondary" onClick={handleDelete} disabled={deleting}>
-          <Trash2 size={16} className="text-red-400" />
-        </Button>
-      </div>
+      {showActions && (
+        <div className="flex gap-2">
+          {onEdit && (
+            <Button type="button" variant="secondary" className="flex-1" onClick={() => onEdit(exercise)}>
+              <Pencil size={16} className="mr-2" /> Editar
+            </Button>
+          )}
+          {onDelete && (
+            <Button type="button" variant="secondary" onClick={handleDelete} disabled={deleting}>
+              <Trash2 size={16} className="text-red-400" />
+            </Button>
+          )}
+        </div>
+      )}
     </Modal>
   );
 }
