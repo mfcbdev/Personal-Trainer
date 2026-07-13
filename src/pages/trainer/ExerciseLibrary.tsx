@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Library, Plus } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
@@ -44,9 +45,16 @@ export default function ExerciseLibrary() {
       <PageHeader
         title="Biblioteca de ejercicios"
         action={
-          <Button type="button" onClick={openCreate} size="md">
-            <Plus size={18} className="mr-1.5" /> Nuevo
-          </Button>
+          <div className="flex gap-2">
+            <Link to="/t/exercises/catalog">
+              <Button type="button" variant="secondary" size="md">
+                <Library size={18} className="mr-1.5" /> Catálogo
+              </Button>
+            </Link>
+            <Button type="button" onClick={openCreate} size="md">
+              <Plus size={18} className="mr-1.5" /> Nuevo
+            </Button>
+          </div>
         }
       />
 
