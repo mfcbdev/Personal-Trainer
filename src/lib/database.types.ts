@@ -111,6 +111,8 @@ export interface Database {
           zone: ExerciseZone;
           movement_type: MovementType;
           video_url: string | null;
+          image_url: string | null;
+          gif_url: string | null;
           notes: string | null;
           created_at: string;
         };
@@ -122,6 +124,37 @@ export interface Database {
           movement_type: MovementType;
         };
         Update: Partial<Database['public']['Tables']['exercises']['Row']>;
+        Relationships: [];
+      };
+      exercises_catalog: {
+        Row: {
+          id: string;
+          name: string;
+          name_es: string | null;
+          category: string;
+          equipment: string;
+          target: string;
+          muscle_group: string;
+          secondary_muscles: string[];
+          instructions_en: string | null;
+          instructions_es: string | null;
+          zone: ExerciseZone;
+          movement_type: MovementType;
+          image_url: string | null;
+          gif_url: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database['public']['Tables']['exercises_catalog']['Row']> & {
+          id: string;
+          name: string;
+          category: string;
+          equipment: string;
+          target: string;
+          muscle_group: string;
+          zone: ExerciseZone;
+          movement_type: MovementType;
+        };
+        Update: Partial<Database['public']['Tables']['exercises_catalog']['Row']>;
         Relationships: [];
       };
       programs: {
@@ -320,6 +353,10 @@ export interface Database {
       seed_default_exercises: {
         Args: { p_trainer_id: string };
         Returns: undefined;
+      };
+      import_catalog_exercise: {
+        Args: { p_catalog_id: string };
+        Returns: string;
       };
     };
   };

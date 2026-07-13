@@ -75,6 +75,12 @@ The schema lives in [`supabase/migrations/`](supabase/migrations/) as numbered S
 - `014_lifestyle_daily_habits.sql` — daily habits columns for the onboarding flow
 - `015_fix_sessions_insert_rls.sql` — RLS fix for creating new sessions
 - `016_progressions_unique.sql` — unique constraint for progression table upserts
+- `017_exercises_catalog.sql` — optional global catalog (`exercises_catalog`) + `import_catalog_exercise` RPC
+- `018_exercises_add_media.sql` — adds `image_url`/`gif_url` columns to `exercises` for catalog imports
+
+To seed the optional 1,324-exercise catalog (media + metadata from the
+[hasaneyldrm/exercises-dataset](https://github.com/hasaneyldrm/exercises-dataset) project), see
+[scripts/README.md](scripts/README.md).
 
 After running the migrations, in Supabase Auth **Sign In / Providers**:
 - Enable **Email provider**
