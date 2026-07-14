@@ -18,6 +18,16 @@ body,
   height: 100%;
 }
 
+html,
+body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   @apply bg-base text-zinc-50 font-sans antialiased;
   margin: 0;
