@@ -11,6 +11,7 @@ import { MeasurementFormModal } from '../../components/measurements/MeasurementF
 import { MeasurementList } from '../../components/measurements/MeasurementList';
 import { TrackingTrendChart } from '../../components/dashboard/TrackingTrendChart';
 import { HRZonesTable } from '../../components/dashboard/HRZonesTable';
+import { HRTargetTable } from '../../components/dashboard/HRTargetTable';
 import { useClient } from '../../hooks/useClients';
 import { useClientPrograms } from '../../hooks/usePrograms';
 import { useMeasurements } from '../../hooks/useMeasurements';
@@ -149,8 +150,18 @@ export default function ClientDetail() {
       )}
 
       {tab === 'zones' && client && (
-        evalLoading ? <Skeleton className="h-48" /> : (
-          <HRZonesTable client={client} evaluation={evaluation} onSaved={refetchEval} />
+        evalLoading ? (
+          <Skeleton className="h-48" />
+        ) : (
+          <div className="space-y-4">
+            <HRZonesTable client={client} evaluation={evaluation} onSaved={refetchEval} />
+            <HRTargetTable
+              restingHr={evaluation?.resting_hr ?? null}
+              maxHr={evaluation?.max_hr ?? null}
+              evaluation={evaluation}
+              onSaved={refetchEval}
+            />
+          </div>
         )
       )}
 

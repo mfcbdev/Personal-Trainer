@@ -33,13 +33,24 @@ export function HRZonesTable({ client, evaluation, onSaved }: HRZonesTableProps)
     }
     setSaving(true);
     try {
-      const { error } = await supabase.from('cardiovascular_evaluation').insert({
-        client_id: client.id,
-        resting_hr: restingValue,
-        max_hr: maxValue,
-        age,
-      });
-      if (error) throw error;
+      // Update the latest evaluation row in place so per-target
+      // velocidad / inclinación persisted alongside it don't get orphaned.
+      // Insert a new row only when the client has no evaluation yet.
+      if (evaluation) {
+        const { error } = await supabase
+          .from('cardiovascular_evaluation')
+          .update({ resting_hr: restingValue, max_hr: maxValue, age })
+          .eq('id', evaluation.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('cardiovascular_evaluation').insert({
+          client_id: client.id,
+          resting_hr: restingValue,
+          max_hr: maxValue,
+          age,
+        });
+        if (error) throw error;
+      }
       showSuccess('Zonas actualizadas.');
       await onSaved();
     } catch (error) {

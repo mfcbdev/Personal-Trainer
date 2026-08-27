@@ -76,6 +76,14 @@ export interface Database {
           resting_hr: number | null;
           age: number | null;
           max_hr: number | null;
+          target_90_kmh: number | null;
+          target_90_incline: number | null;
+          target_80_kmh: number | null;
+          target_80_incline: number | null;
+          target_70_kmh: number | null;
+          target_70_incline: number | null;
+          target_60_kmh: number | null;
+          target_60_incline: number | null;
           created_at: string;
         };
         Insert: Partial<Database['public']['Tables']['cardiovascular_evaluation']['Row']> & { client_id: string };
