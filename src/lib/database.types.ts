@@ -93,6 +93,10 @@ export interface Database {
           tricipital: number | null;
           subscapular: number | null;
           suprailiac: number | null;
+          waist: number | null;
+          hip: number | null;
+          thigh: number | null;
+          biceps_circumference: number | null;
           body_fat_pct: number | null;
           fat_mass: number | null;
           lean_mass: number | null;

@@ -59,6 +59,14 @@ export function MeasurementList({ measurements, onDelete }: MeasurementListProps
               const fatDelta = isBaseline ? null : formatDelta(m.body_fat_pct, baseline.body_fat_pct);
               const leanDelta = isBaseline ? null : formatDelta(m.lean_mass, baseline.lean_mass);
 
+              const hasCircumferences =
+                m.waist != null || m.hip != null || m.thigh != null || m.biceps_circumference != null;
+              const waistDelta = isBaseline ? null : formatDelta(m.waist, baseline.waist);
+              const hipDelta = isBaseline ? null : formatDelta(m.hip, baseline.hip);
+              const thighDelta = isBaseline ? null : formatDelta(m.thigh, baseline.thigh);
+              const bicepsDelta = isBaseline
+                ? null
+                : formatDelta(m.biceps_circumference, baseline.biceps_circumference);
               return (
                 <Card key={m.id}>
                   <div className="flex items-start justify-between mb-3">
@@ -85,6 +93,14 @@ export function MeasurementList({ measurements, onDelete }: MeasurementListProps
                     <MetricCell label="M. magra" value={m.lean_mass} suffix="kg" delta={leanDelta} />
                     <MetricCell label="IMC" value={m.bmi} />
                   </div>
+                  {hasCircumferences && (
+                    <div className="grid grid-cols-4 gap-2 text-sm mt-3 pt-3 border-t border-zinc-800">
+                      <MetricCell label="Cintura" value={m.waist} suffix="cm" delta={waistDelta} />
+                      <MetricCell label="Cadera" value={m.hip} suffix="cm" delta={hipDelta} />
+                      <MetricCell label="Muslo" value={m.thigh} suffix="cm" delta={thighDelta} />
+                      <MetricCell label="Bíceps" value={m.biceps_circumference} suffix="cm" delta={bicepsDelta} />
+                    </div>
+                  )}
                 </Card>
               );
             })}

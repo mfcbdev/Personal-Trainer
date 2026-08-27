@@ -5,7 +5,7 @@ import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useToast } from '../../contexts/ToastContext';
-import { measurementSchema, type MeasurementInput } from '../../lib/measurement-schema';
+import { measurementSchema, toDbNumber, type MeasurementInput } from '../../lib/measurement-schema';
 import type { ClientProfile } from '../../hooks/useClients';
 import type { BodyMeasurementInsert } from '../../hooks/useMeasurements';
 import {
@@ -28,6 +28,20 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+const emptyDefaults = (): MeasurementInput => ({
+  measuredAt: todayISO(),
+  weight: 0,
+  height: 0,
+  bicipital: 0,
+  tricipital: 0,
+  subscapular: 0,
+  suprailiac: 0,
+  waist: null,
+  hip: null,
+  thigh: null,
+  bicepsCircumference: null,
+});
+
 export function MeasurementFormModal({ open, onClose, client, onSubmit }: MeasurementFormModalProps) {
   const { showError, showSuccess } = useToast();
   const [submitting, setSubmitting] = useState(false);
@@ -40,19 +54,11 @@ export function MeasurementFormModal({ open, onClose, client, onSubmit }: Measur
     formState: { errors },
   } = useForm<MeasurementInput>({
     resolver: zodResolver(measurementSchema),
-    defaultValues: {
-      measuredAt: todayISO(),
-      weight: 0,
-      height: 0,
-      bicipital: 0,
-      tricipital: 0,
-      subscapular: 0,
-      suprailiac: 0,
-    },
+    defaultValues: emptyDefaults(),
   });
 
   useEffect(() => {
-    if (open) reset({ measuredAt: todayISO(), weight: 0, height: 0, bicipital: 0, tricipital: 0, subscapular: 0, suprailiac: 0 });
+    if (open) reset(emptyDefaults());
   }, [open, reset]);
 
   const values = watch();
@@ -80,6 +86,10 @@ export function MeasurementFormModal({ open, onClose, client, onSubmit }: Measur
         tricipital: input.tricipital,
         subscapular: input.subscapular,
         suprailiac: input.suprailiac,
+        waist: toDbNumber(input.waist),
+        hip: toDbNumber(input.hip),
+        thigh: toDbNumber(input.thigh),
+        biceps_circumference: toDbNumber(input.bicepsCircumference),
         body_fat_pct: derived.bodyFatPct,
         fat_mass: derived.fatMass,
         lean_mass: derived.leanMass,
@@ -114,6 +124,14 @@ export function MeasurementFormModal({ open, onClose, client, onSubmit }: Measur
           <NumericField label="Tricipital" step="0.1" {...register('tricipital', { valueAsNumber: true })} />
           <NumericField label="Subescapular" step="0.1" {...register('subscapular', { valueAsNumber: true })} />
           <NumericField label="Suprailíaco" step="0.1" {...register('suprailiac', { valueAsNumber: true })} />
+        </div>
+
+        <h3 className="text-xs font-medium text-zinc-500 uppercase pt-2">Medidas corporales (cm)</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <NumericField label="Cintura" step="0.1" {...register('waist', { valueAsNumber: true })} />
+          <NumericField label="Cadera" step="0.1" {...register('hip', { valueAsNumber: true })} />
+          <NumericField label="Muslo" step="0.1" {...register('thigh', { valueAsNumber: true })} />
+          <NumericField label="Bíceps" step="0.1" {...register('bicepsCircumference', { valueAsNumber: true })} />
         </div>
 
         <div className="rounded-lg bg-base p-4 mt-4">
