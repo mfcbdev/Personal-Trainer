@@ -25,6 +25,7 @@ import ProgramEditor from './pages/trainer/ProgramEditor';
 import SessionEditor from './pages/trainer/SessionEditor';
 import ExerciseLibrary from './pages/trainer/ExerciseLibrary';
 import ExerciseCatalog from './pages/trainer/ExerciseCatalog';
+import TrainerCalendar from './pages/trainer/TrainerCalendar';
 import TrainerSettings from './pages/trainer/TrainerSettings';
 
 import TodayPage from './pages/client/TodayPage';
@@ -70,6 +71,7 @@ function App() {
                 <Route path="/t" element={<TrainerGuard />}>
                   <Route element={<TrainerShell />}>
                     <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="calendar" element={<TrainerCalendar />} />
                     <Route path="clients" element={<ClientList />} />
                     <Route path="clients/:id" element={<ClientDetail />} />
                     <Route path="clients/:id/program/:pid" element={<ProgramEditor />} />

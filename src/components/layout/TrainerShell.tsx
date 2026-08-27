@@ -1,11 +1,12 @@
 import { Outlet } from 'react-router-dom';
-import { LayoutDashboard, Users, Dumbbell, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Dumbbell, Settings, Calendar } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
 import { TopBar } from './TopBar';
 
 const navItems = [
   { to: '/t/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/t/calendar', label: 'Calendario', icon: Calendar },
   { to: '/t/clients', label: 'Clientes', icon: Users },
   { to: '/t/exercises', label: 'Ejercicios', icon: Dumbbell },
   { to: '/t/settings', label: 'Ajustes', icon: Settings },
