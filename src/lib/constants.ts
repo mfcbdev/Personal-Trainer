@@ -15,6 +15,17 @@ export const PHASE_COLORS: Record<GrowPhase, { bg: string; text: string }> = {
   W: { bg: 'bg-fuchsia-500/15', text: 'text-fuchsia-400' },
 };
 
+export const PROGRAM_TEMPLATE_TYPES = ['strength', 'hypertrophy', 'hiit', 'mobility', 'general'] as const;
+export type ProgramTemplate = (typeof PROGRAM_TEMPLATE_TYPES)[number];
+
+export const PROGRAM_TEMPLATE_LABELS: Record<ProgramTemplate, string> = {
+  strength: 'Fuerza',
+  hypertrophy: 'Hipertrofia',
+  hiit: 'HIIT',
+  mobility: 'Movilidad',
+  general: 'General',
+};
+
 export const MUSCLE_GROUPS = [
   'Pecho',
   'Hombros',

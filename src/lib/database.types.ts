@@ -6,6 +6,7 @@ export type MovementType = 'push' | 'pull' | 'legs' | 'core' | 'cardio';
 export type FrequencyScale = 'never' | 'sometimes' | 'often' | 'always';
 export type DailyStatus = 'achieved' | 'in_progress' | 'missed';
 export type SubscriptionPlan = 'free' | 'pro' | 'premium';
+export type ProgramTemplateType = 'strength' | 'hypertrophy' | 'hiit' | 'mobility' | 'general';
 
 export interface Database {
   public: {
@@ -165,6 +166,7 @@ export interface Database {
           name: string;
           status: ProgramStatus;
           start_date: string;
+          template_type: ProgramTemplateType | null;
           created_at: string;
         };
         Insert: Partial<Database['public']['Tables']['programs']['Row']> & {
@@ -292,6 +294,8 @@ export interface Database {
           sleep_quality: number | null;
           stress: number | null;
           motivation: number | null;
+          energy: number | null;
+          mood: number | null;
           proudest_moment: string | null;
           created_at: string;
         };

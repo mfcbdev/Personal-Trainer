@@ -16,6 +16,7 @@ import { useClientPrograms } from '../../hooks/usePrograms';
 import { useMeasurements } from '../../hooks/useMeasurements';
 import { useClientTrackingHistory } from '../../hooks/useClientTrackingHistory';
 import { useCardioEvaluation } from '../../hooks/useCardioEvaluation';
+import { PROGRAM_TEMPLATE_LABELS } from '../../lib/constants';
 
 const TABS = ['overview', 'program', 'measurements', 'tracking', 'zones'] as const;
 type Tab = (typeof TABS)[number];
@@ -105,7 +106,17 @@ export default function ClientDetail() {
                   <Card className="flex items-center justify-between hover:ring-1 hover:ring-zinc-700 transition-shadow">
                     <div>
                       <p className="text-sm font-medium text-zinc-50">{program.name}</p>
-                      <p className="text-xs text-zinc-500">Inicio: {program.start_date}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-xs text-zinc-500">Inicio: {program.start_date}</p>
+                        {program.template_type && (
+                          <span className="text-xs text-zinc-500">·</span>
+                        )}
+                        {program.template_type && (
+                          <p className="text-xs text-zinc-400">
+                            {PROGRAM_TEMPLATE_LABELS[program.template_type]}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <Badge variant={program.status === 'active' ? 'accent' : 'default'}>
                       {STATUS_LABELS[program.status]}

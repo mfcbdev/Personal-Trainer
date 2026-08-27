@@ -13,6 +13,8 @@ export interface WeeklyTrackingInput {
   sessionsCompleted: number;
   fatigue: number;
   recovery: number;
+  energy: number;
+  mood: number;
   weight: number | null;
   nutritionAdherence: number;
   satiety: number;
@@ -77,6 +79,8 @@ export function useWeeklyTracking(weekStart: Date) {
           sessions_completed: input.sessionsCompleted,
           fatigue: input.fatigue,
           recovery: input.recovery,
+          energy: input.energy,
+          mood: input.mood,
           weight: input.weight,
           nutrition_adherence: input.nutritionAdherence,
           satiety: input.satiety,

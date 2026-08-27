@@ -6,12 +6,13 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useToast } from '../../contexts/ToastContext';
 import { programSchema, type ProgramInput } from '../../lib/program-schema';
-import type { Program } from '../../hooks/usePrograms';
+import { PROGRAM_TEMPLATE_TYPES, PROGRAM_TEMPLATE_LABELS } from '../../lib/constants';
+import type { Program, ProgramCreateInput } from '../../hooks/usePrograms';
 
 interface ProgramCreateModalProps {
   open: boolean;
   onClose: () => void;
-  onCreate: (name: string, startDate: string) => Promise<Program>;
+  onCreate: (input: ProgramCreateInput) => Promise<Program>;
   onCreated: (program: Program) => void;
 }
 
@@ -24,12 +25,19 @@ export function ProgramCreateModal({ open, onClose, onCreate, onCreated }: Progr
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<ProgramInput>({ resolver: zodResolver(programSchema) });
+  } = useForm<ProgramInput>({
+    resolver: zodResolver(programSchema),
+    defaultValues: { name: '', startDate: '', templateType: null },
+  });
 
   async function onSubmit(values: ProgramInput) {
     setSubmitting(true);
     try {
-      const program = await onCreate(values.name, values.startDate);
+      const program = await onCreate({
+        name: values.name,
+        startDate: values.startDate,
+        templateType: values.templateType,
+      });
       reset();
       onCreated(program);
     } catch (error) {
@@ -51,6 +59,23 @@ export function ProgramCreateModal({ open, onClose, onCreate, onCreated }: Progr
           <label className="block text-sm text-zinc-400 mb-1.5">Fecha de inicio</label>
           <Input type="date" {...register('startDate')} />
           {errors.startDate && <p className="mt-1 text-xs text-red-400">{errors.startDate.message}</p>}
+        </div>
+        <div>
+          <label className="block text-sm text-zinc-400 mb-1.5">Tipo de programa</label>
+          <select
+            {...register('templateType', {
+              setValueAs: (v: string) => (v ? v : null),
+            })}
+            defaultValue=""
+            className="h-11 w-full rounded-lg border border-zinc-800 bg-surface px-3 text-sm text-zinc-50 outline-none focus:border-accent"
+          >
+            <option value="">Sin especificar</option>
+            {PROGRAM_TEMPLATE_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {PROGRAM_TEMPLATE_LABELS[t]}
+              </option>
+            ))}
+          </select>
         </div>
         <Button type="submit" className="w-full" size="lg" disabled={submitting}>
           {submitting ? 'Creando...' : 'Crear programa'}

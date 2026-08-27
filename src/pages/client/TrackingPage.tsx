@@ -50,6 +50,8 @@ export default function TrackingPage() {
       form.reset({
         fatigue: tracking.fatigue ?? 5,
         recovery: tracking.recovery ?? 5,
+        energy: tracking.energy ?? 5,
+        mood: tracking.mood ?? 5,
         weight: tracking.weight,
         nutritionAdherence: tracking.nutrition_adherence ?? 5,
         satiety: tracking.satiety ?? 5,
@@ -121,6 +123,16 @@ export default function TrackingPage() {
               control={form.control}
               name="recovery"
               render={({ field }) => <SliderInput label="Recuperación" value={field.value} onChange={field.onChange} />}
+            />
+            <Controller
+              control={form.control}
+              name="energy"
+              render={({ field }) => <SliderInput label="Energía" value={field.value} onChange={field.onChange} />}
+            />
+            <Controller
+              control={form.control}
+              name="mood"
+              render={({ field }) => <SliderInput label="Estado de ánimo" value={field.value} onChange={field.onChange} />}
             />
           </div>
         </Card>
