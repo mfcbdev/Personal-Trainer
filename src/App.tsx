@@ -29,6 +29,7 @@ import TrainerSettings from './pages/trainer/TrainerSettings';
 
 import TodayPage from './pages/client/TodayPage';
 import CalendarPage from './pages/client/CalendarPage';
+import ProgramPage from './pages/client/ProgramPage';
 import SessionPage from './pages/client/SessionPage';
 import ProfilePage from './pages/client/ProfilePage';
 import ExercisesPage from './pages/client/ExercisesPage';
@@ -83,6 +84,7 @@ function App() {
                   <Route element={<ClientShell />}>
                     <Route path="today" element={<TodayPage />} />
                     <Route path="calendar" element={<CalendarPage />} />
+                    <Route path="program" element={<ProgramPage />} />
                     <Route path="session/:id" element={<SessionPage />} />
                     <Route path="progress" element={<ProgressPage />} />
                     <Route path="tracking" element={<TrackingPage />} />

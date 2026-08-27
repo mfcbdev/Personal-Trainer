@@ -181,7 +181,7 @@ function MiniCard({ to, icon: Icon, label }: MiniCardProps) {
 function MiniCardGrid() {
   return (
     <div className="grid grid-cols-3 gap-3 mb-5">
-      <MiniCard to="/c/calendar" icon={Calendar} label="Mi Programa" />
+      <MiniCard to="/c/program" icon={Calendar} label="Mi Programa" />
       <MiniCard to="/c/progress" icon={LineChart} label="Mi Progreso" />
       <MiniCard to="/c/exercises" icon={Dumbbell} label="Biblioteca" />
     </div>
