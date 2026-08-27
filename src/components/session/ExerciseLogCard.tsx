@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { ActiveSetRow } from './ActiveSetRow';
 import { getYouTubeEmbedUrl, getYouTubeThumbnail } from '../../lib/youtube';
@@ -8,17 +7,25 @@ import type { ActiveSessionExercise, SetUpdateFields } from '../../hooks/useActi
 interface ExerciseLogCardProps {
   item: ActiveSessionExercise;
   onUpdateSet: (setNumber: number, fields: SetUpdateFields) => void;
-  onAddSet: () => void;
-  onRemoveSet: (logId: string) => void;
 }
 
-export function ExerciseLogCard({ item, onUpdateSet, onAddSet, onRemoveSet }: ExerciseLogCardProps) {
+// Extract the first integer from a planned reps string like "10-12" or "12".
+// Returns null when no digit is present (e.g. "AMRAP").
+function parsePlannedReps(text: string | null): number | null {
+  if (!text) return null;
+  const match = text.match(/\d+/);
+  return match ? Number(match[0]) : null;
+}
+
+export function ExerciseLogCard({ item, onUpdateSet }: ExerciseLogCardProps) {
   const [videoOpen, setVideoOpen] = useState(false);
   const thumbnail = item.exercise.video_url ? getYouTubeThumbnail(item.exercise.video_url) : null;
   const embedUrl = item.exercise.video_url ? getYouTubeEmbedUrl(item.exercise.video_url) : null;
 
-  const setCount = Math.max(item.sets ?? 0, item.logs.length, 1);
+  // Alumno can't add sets — session cardinality is fixed by the coach.
+  const setCount = Math.max(item.sets ?? 1, 1);
   const setNumbers = Array.from({ length: setCount }, (_, i) => i + 1);
+  const plannedReps = parsePlannedReps(item.reps);
 
   return (
     <Card>
@@ -35,15 +42,17 @@ export function ExerciseLogCard({ item, onUpdateSet, onAddSet, onRemoveSet }: Ex
           <p className="text-xs text-zinc-500">
             Meta: {item.sets ?? '-'} × {item.reps ?? '-'} {item.weight ? `· ${item.weight}kg` : ''}
           </p>
+          {item.notes && (
+            <p className="text-xs text-zinc-500 mt-1 italic">{item.notes}</p>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-[24px_1fr_1fr_1fr_36px_28px] gap-1.5 mb-1 px-0.5">
+      <div className="grid grid-cols-[24px_1fr_1fr_1fr_36px] gap-1.5 mb-1 px-0.5">
         <span />
         <span className="text-[10px] text-zinc-500 text-center">Reps</span>
         <span className="text-[10px] text-zinc-500 text-center">Kg</span>
-        <span className="text-[10px] text-zinc-500 text-center">RPE</span>
-        <span />
+        <span className="text-[10px] text-zinc-500 text-center">CF</span>
         <span />
       </div>
 
@@ -56,19 +65,11 @@ export function ExerciseLogCard({ item, onUpdateSet, onAddSet, onRemoveSet }: Ex
             setNumber={setNumber}
             log={log}
             ghost={ghost}
+            plannedReps={plannedReps}
             onUpdate={(fields) => onUpdateSet(setNumber, fields)}
-            onDelete={() => log && onRemoveSet(log.id)}
           />
         );
       })}
-
-      <button
-        type="button"
-        onClick={onAddSet}
-        className="mt-2 flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300"
-      >
-        <Plus size={14} /> Agregar set
-      </button>
 
       {videoOpen && embedUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setVideoOpen(false)}>

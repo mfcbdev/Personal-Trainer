@@ -21,8 +21,7 @@ export default function SessionPage() {
   const { id: sessionId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showError } = useToast();
-  const { session, items, loading, upsertSetLog, addSet, removeSetLog, completeWorkout } =
-    useActiveSession(sessionId);
+  const { session, items, loading, upsertSetLog, completeWorkout } = useActiveSession(sessionId);
 
   const [elapsed, setElapsed] = useState(0);
   const [restSeconds, setRestSeconds] = useState<number | null>(null);
@@ -136,8 +135,6 @@ export default function SessionPage() {
             key={item.id}
             item={item}
             onUpdateSet={(setNumber, fields) => handleSetUpdate(item.id, setNumber, fields)}
-            onAddSet={() => addSet(item.id)}
-            onRemoveSet={(logId) => removeSetLog(item.id, logId)}
           />
         ))}
       </div>
