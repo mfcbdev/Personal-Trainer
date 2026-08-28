@@ -25,8 +25,11 @@ export function ExerciseLogCard({ item, onUpdateSet }: ExerciseLogCardProps) {
   const exercise = item.exercise;
   const video = resolveVideoSource(exercise.video_url);
 
-  // Alumno can't add sets — session cardinality is fixed by the coach.
-  const setCount = Math.max(item.sets ?? 1, 1);
+  // Alumno can't add sets — session cardinality is fixed by the coach. But
+  // preserve any historical set_logs from before the coach reduced item.sets
+  // so previously-logged sets stay visible/editable (they still count in
+  // volume aggregations downstream).
+  const setCount = Math.max(item.sets ?? 1, item.logs.length, 1);
   const setNumbers = Array.from({ length: setCount }, (_, i) => i + 1);
   const plannedReps = parsePlannedReps(item.reps);
 
