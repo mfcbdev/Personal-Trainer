@@ -7,6 +7,7 @@ export type FrequencyScale = 'never' | 'sometimes' | 'often' | 'always';
 export type DailyStatus = 'achieved' | 'in_progress' | 'missed';
 export type SubscriptionPlan = 'free' | 'pro' | 'premium';
 export type ProgramTemplateType = 'strength' | 'hypertrophy' | 'hiit' | 'mobility' | 'general';
+export type PhotoPose = 'frente' | 'perfil' | 'espalda';
 
 export interface Database {
   public: {
@@ -332,6 +333,23 @@ export interface Database {
           day_date: string;
         };
         Update: Partial<Database['public']['Tables']['daily_log']['Row']>;
+        Relationships: [];
+      };
+      progress_photos: {
+        Row: {
+          id: string;
+          client_id: string;
+          pose: PhotoPose;
+          storage_path: string;
+          taken_at: string;
+          created_at: string;
+        };
+        Insert: Partial<Database['public']['Tables']['progress_photos']['Row']> & {
+          client_id: string;
+          pose: PhotoPose;
+          storage_path: string;
+        };
+        Update: Partial<Database['public']['Tables']['progress_photos']['Row']>;
         Relationships: [];
       };
       hr_zones: {

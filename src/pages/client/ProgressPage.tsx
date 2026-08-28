@@ -7,6 +7,7 @@ import { VolumeChart } from '../../components/progress/VolumeChart';
 import { WeeklyComparisonChart } from '../../components/progress/WeeklyComparisonChart';
 import { BaseExerciseList } from '../../components/progress/BaseExerciseList';
 import { MuscleHeatmap } from '../../components/progress/MuscleHeatmap';
+import { PhotoGallery } from '../../components/progress/PhotoGallery';
 import { MeasurementList } from '../../components/measurements/MeasurementList';
 import { useClientProgress } from '../../hooks/useClientProgress';
 import { useMeasurements } from '../../hooks/useMeasurements';
@@ -51,6 +52,11 @@ export default function ProgressPage() {
         <Card>
           <h3 className="text-xs font-medium text-zinc-500 uppercase mb-1">Ejercicios base</h3>
           {loading ? <Skeleton className="h-24" /> : <BaseExerciseList items={baseExercises} />}
+        </Card>
+
+        <Card>
+          <h3 className="text-xs font-medium text-zinc-500 uppercase mb-3">Registro fotográfico</h3>
+          <PhotoGallery />
         </Card>
 
         <Card>
