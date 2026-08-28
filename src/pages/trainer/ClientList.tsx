@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, User } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
-import { Card } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { useClients } from '../../hooks/useClients';
+import { ClientCard } from '../../components/dashboard/ClientCard';
+import { useTrainerDashboard } from '../../hooks/useTrainerDashboard';
 
 export default function ClientList() {
-  const { clients, loading } = useClients();
+  const { entries, loading } = useTrainerDashboard();
   const [search, setSearch] = useState('');
 
-  const filtered = clients.filter((c) => (c.full_name ?? '').toLowerCase().includes(search.toLowerCase()));
+  const filtered = entries.filter((entry) =>
+    (entry.client.full_name ?? '').toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <div>
@@ -34,32 +36,23 @@ export default function ClientList() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        clients.length === 0 ? (
+        entries.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-sm font-medium text-zinc-200 mb-1">Aún no tienes clientes</p>
-            <p className="text-sm text-zinc-500 mb-4">Copia tu enlace de invitación desde el Dashboard o Ajustes para que un cliente cree su cuenta vinculada.</p>
-            <Link to="/t/dashboard" className="text-sm text-accent font-medium">Ir al Dashboard →</Link>
+            <p className="text-sm text-zinc-500 mb-4">
+              Copia tu enlace de invitación desde el Dashboard o Ajustes para que un cliente cree su cuenta vinculada.
+            </p>
+            <Link to="/t/dashboard" className="text-sm text-accent font-medium">
+              Ir al Dashboard →
+            </Link>
           </div>
         ) : (
           <p className="text-sm text-zinc-500 text-center py-10">No se encontraron clientes.</p>
         )
       ) : (
         <div className="space-y-3">
-          {filtered.map((client) => (
-            <Link key={client.id} to={`/t/clients/${client.id}`}>
-              <Card className="flex items-center gap-3 hover:ring-1 hover:ring-zinc-700 transition-shadow">
-                <div className="h-11 w-11 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
-                  <User size={20} className="text-zinc-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-zinc-50 truncate">{client.full_name ?? 'Sin nombre'}</p>
-                  <p className="text-xs text-zinc-500 truncate">{client.email}</p>
-                </div>
-                {!client.onboarding_completed && (
-                  <span className="text-xs text-zinc-500 shrink-0">Onboarding pendiente</span>
-                )}
-              </Card>
-            </Link>
+          {filtered.map((entry) => (
+            <ClientCard key={entry.client.id} entry={entry} />
           ))}
         </div>
       )}

@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ExerciseLogCard } from '../../components/session/ExerciseLogCard';
+import { CardioLogCard } from '../../components/session/CardioLogCard';
 import { RestTimerBanner } from '../../components/session/RestTimerBanner';
 import { useActiveSession, type SetUpdateFields } from '../../hooks/useActiveSession';
 import { useToast } from '../../contexts/ToastContext';
@@ -21,7 +22,7 @@ export default function SessionPage() {
   const { id: sessionId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showError } = useToast();
-  const { session, items, loading, upsertSetLog, addSet, removeSetLog, completeWorkout } =
+  const { session, items, loading, upsertSetLog, setCardioCompleted, completeWorkout } =
     useActiveSession(sessionId);
 
   const [elapsed, setElapsed] = useState(0);
@@ -75,7 +76,9 @@ export default function SessionPage() {
         sum + item.logs.filter((l) => l.completed).reduce((s, l) => s + (l.reps ?? 0) * (l.weight ?? 0), 0),
       0,
     );
-    const exercisesCompleted = items.filter((item) => item.logs.some((l) => l.completed)).length;
+    const exercisesCompleted = items.filter((item) =>
+      item.item_type === 'strength' ? item.logs.some((l) => l.completed) : item.completed,
+    ).length;
     const prExercises = items.filter((item) => {
       const todayMax = Math.max(0, ...item.logs.filter((l) => l.completed).map((l) => l.weight ?? 0));
       const historyMax = Math.max(0, ...item.ghosts.map((g) => g.weight ?? 0));
@@ -131,15 +134,21 @@ export default function SessionPage() {
       </div>
 
       <div className="space-y-4">
-        {items.map((item) => (
-          <ExerciseLogCard
-            key={item.id}
-            item={item}
-            onUpdateSet={(setNumber, fields) => handleSetUpdate(item.id, setNumber, fields)}
-            onAddSet={() => addSet(item.id)}
-            onRemoveSet={(logId) => removeSetLog(item.id, logId)}
-          />
-        ))}
+        {items.map((item) =>
+          item.item_type === 'strength' ? (
+            <ExerciseLogCard
+              key={item.id}
+              item={item}
+              onUpdateSet={(setNumber, fields) => handleSetUpdate(item.id, setNumber, fields)}
+            />
+          ) : (
+            <CardioLogCard
+              key={item.id}
+              item={item}
+              onToggleComplete={(completed) => setCardioCompleted(item.id, completed)}
+            />
+          ),
+        )}
       </div>
 
       <div className="fixed bottom-0 inset-x-0 p-4 bg-base/95 backdrop-blur border-t border-zinc-800">

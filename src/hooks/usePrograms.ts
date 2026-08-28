@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import type { Database } from '../lib/database.types';
+import type { Database, ProgramTemplateType } from '../lib/database.types';
 
 export type Program = Database['public']['Tables']['programs']['Row'];
+
+export interface ProgramCreateInput {
+  name: string;
+  startDate: string;
+  templateType: ProgramTemplateType | null;
+}
 
 export function useClientPrograms(clientId: string | undefined) {
   const { user } = useAuth();
@@ -26,11 +32,17 @@ export function useClientPrograms(clientId: string | undefined) {
     refetch();
   }, [refetch]);
 
-  async function createProgram(name: string, startDate: string) {
+  async function createProgram(input: ProgramCreateInput) {
     if (!clientId || !user) throw new Error('Faltan datos');
     const { data, error } = await supabase
       .from('programs')
-      .insert({ client_id: clientId, trainer_id: user.id, name, start_date: startDate })
+      .insert({
+        client_id: clientId,
+        trainer_id: user.id,
+        name: input.name,
+        start_date: input.startDate,
+        template_type: input.templateType,
+      })
       .select()
       .single();
     if (error) throw error;

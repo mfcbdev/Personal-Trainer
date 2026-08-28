@@ -1,11 +1,11 @@
-import { Dumbbell } from 'lucide-react';
+import { Dumbbell, Play } from 'lucide-react';
 import { Badge } from '../ui/Badge';
-import { getYouTubeThumbnail } from '../../lib/youtube';
+import { resolveVideoSource } from '../../lib/video-source';
 import { ZONE_LABELS } from '../../lib/constants';
 import type { Exercise } from '../../hooks/useExercises';
 
 export function ExerciseCard({ exercise, onClick }: { exercise: Exercise; onClick: () => void }) {
-  const thumbnail = exercise.video_url ? getYouTubeThumbnail(exercise.video_url) : null;
+  const video = resolveVideoSource(exercise.video_url);
 
   return (
     <button
@@ -14,8 +14,10 @@ export function ExerciseCard({ exercise, onClick }: { exercise: Exercise; onClic
       className="text-left rounded-lg bg-surface overflow-hidden hover:ring-1 hover:ring-zinc-700 transition-shadow"
     >
       <div className="aspect-video bg-zinc-800 flex items-center justify-center">
-        {thumbnail ? (
-          <img src={thumbnail} alt="" className="h-full w-full object-cover" loading="lazy" />
+        {video.thumbnail ? (
+          <img src={video.thumbnail} alt="" className="h-full w-full object-cover" loading="lazy" />
+        ) : video.kind === 'file' ? (
+          <Play className="text-zinc-500" size={22} />
         ) : (
           <Dumbbell className="text-zinc-600" size={28} />
         )}

@@ -94,14 +94,16 @@ export function WeekRow({
             onSetDay={(isoDate) => onSetSessionDay(session, isoDate)}
           />
         ))}
-        <button
-          type="button"
-          onClick={onAddSession}
-          className="w-36 shrink-0 rounded-lg border border-dashed border-zinc-700 flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600"
-        >
-          <Plus size={18} />
-          <span className="text-xs">Sesión</span>
-        </button>
+        {week.sessions.length < 7 && (
+          <button
+            type="button"
+            onClick={onAddSession}
+            className="w-36 shrink-0 rounded-lg border border-dashed border-zinc-700 flex flex-col items-center justify-center gap-1 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600"
+          >
+            <Plus size={18} />
+            <span className="text-xs">Sesión</span>
+          </button>
+        )}
       </div>
     </div>
   );

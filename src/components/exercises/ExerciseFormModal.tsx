@@ -1,14 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Upload } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useToast } from '../../contexts/ToastContext';
 import type { Exercise, ExerciseInsert } from '../../hooks/useExercises';
+import { useExerciseVideoUpload } from '../../hooks/useExerciseVideoUpload';
 import { MUSCLE_GROUPS, MUSCLE_GROUP_CLASSIFICATION } from '../../lib/constants';
 import { exerciseSchema, type ExerciseInput } from '../../lib/exercise-schema';
-import { getYouTubeThumbnail } from '../../lib/youtube';
+import { resolveVideoSource } from '../../lib/video-source';
 
 interface ExerciseFormModalProps {
   open: boolean;
@@ -20,11 +22,14 @@ interface ExerciseFormModalProps {
 export function ExerciseFormModal({ open, exercise, onClose, onSubmit }: ExerciseFormModalProps) {
   const { showError, showSuccess } = useToast();
   const [submitting, setSubmitting] = useState(false);
+  const { uploadVideo, uploading } = useExerciseVideoUpload();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     reset,
     formState: { errors },
   } = useForm<ExerciseInput>({
@@ -47,7 +52,21 @@ export function ExerciseFormModal({ open, exercise, onClose, onSubmit }: Exercis
   }, [open, exercise, reset]);
 
   const videoUrl = watch('videoUrl');
-  const thumbnail = videoUrl ? getYouTubeThumbnail(videoUrl) : null;
+  const preview = resolveVideoSource(videoUrl);
+
+  async function handleFile(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadVideo(file);
+      setValue('videoUrl', url, { shouldValidate: true });
+      showSuccess('Video subido.');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'No se pudo subir el video.');
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
 
   async function handleFormSubmit(values: ExerciseInput) {
     setSubmitting(true);
@@ -95,11 +114,39 @@ export function ExerciseFormModal({ open, exercise, onClose, onSubmit }: Exercis
         </div>
 
         <div>
-          <label className="block text-sm text-zinc-400 mb-1.5">URL de video (YouTube)</label>
+          <label className="block text-sm text-zinc-400 mb-1.5">Video de YouTube (URL)</label>
           <Input {...register('videoUrl')} placeholder="https://www.youtube.com/shorts/..." />
           {errors.videoUrl && <p className="mt-1 text-xs text-red-400">{errors.videoUrl.message}</p>}
-          {thumbnail && (
-            <img src={thumbnail} alt="" className="mt-2 h-24 w-full max-w-xs rounded-lg object-cover" />
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-xs text-zinc-500">o bien</span>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              size="md"
+            >
+              <Upload size={14} className="mr-1.5" />
+              {uploading ? 'Subiendo...' : 'Subir archivo'}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="video/*"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files)}
+            />
+          </div>
+
+          {preview.kind === 'youtube' && preview.thumbnail && (
+            <img src={preview.thumbnail} alt="" className="mt-2 h-24 w-full max-w-xs rounded-lg object-cover" />
+          )}
+          {preview.kind === 'file' && preview.playerUrl && (
+            <video
+              src={preview.playerUrl}
+              controls
+              className="mt-2 h-32 w-full max-w-xs rounded-lg bg-black"
+            />
           )}
         </div>
 

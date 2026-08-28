@@ -25,10 +25,12 @@ import ProgramEditor from './pages/trainer/ProgramEditor';
 import SessionEditor from './pages/trainer/SessionEditor';
 import ExerciseLibrary from './pages/trainer/ExerciseLibrary';
 import ExerciseCatalog from './pages/trainer/ExerciseCatalog';
+import TrainerCalendar from './pages/trainer/TrainerCalendar';
 import TrainerSettings from './pages/trainer/TrainerSettings';
 
 import TodayPage from './pages/client/TodayPage';
 import CalendarPage from './pages/client/CalendarPage';
+import ProgramPage from './pages/client/ProgramPage';
 import SessionPage from './pages/client/SessionPage';
 import ProfilePage from './pages/client/ProfilePage';
 import ExercisesPage from './pages/client/ExercisesPage';
@@ -69,6 +71,7 @@ function App() {
                 <Route path="/t" element={<TrainerGuard />}>
                   <Route element={<TrainerShell />}>
                     <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="calendar" element={<TrainerCalendar />} />
                     <Route path="clients" element={<ClientList />} />
                     <Route path="clients/:id" element={<ClientDetail />} />
                     <Route path="clients/:id/program/:pid" element={<ProgramEditor />} />
@@ -83,6 +86,7 @@ function App() {
                   <Route element={<ClientShell />}>
                     <Route path="today" element={<TodayPage />} />
                     <Route path="calendar" element={<CalendarPage />} />
+                    <Route path="program" element={<ProgramPage />} />
                     <Route path="session/:id" element={<SessionPage />} />
                     <Route path="progress" element={<ProgressPage />} />
                     <Route path="tracking" element={<TrackingPage />} />

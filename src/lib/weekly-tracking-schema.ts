@@ -5,6 +5,8 @@ const scale10 = z.number().min(1).max(10);
 export const weeklyTrackingSchema = z.object({
   fatigue: scale10,
   recovery: scale10,
+  energy: scale10,
+  mood: scale10,
   weight: z.number().min(0).nullable(),
   nutritionAdherence: scale10,
   satiety: scale10,
@@ -29,6 +31,8 @@ export type WeeklyTrackingFormInput = z.infer<typeof weeklyTrackingSchema>;
 export const weeklyTrackingDefaults = (dates: string[]): WeeklyTrackingFormInput => ({
   fatigue: 5,
   recovery: 5,
+  energy: 5,
+  mood: 5,
   weight: null,
   nutritionAdherence: 5,
   satiety: 5,

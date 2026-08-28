@@ -104,6 +104,10 @@ export function useProgramBuilder(programId: string | undefined) {
   }
 
   async function addSession(weekId: string, nextSessionNumber: number) {
+    const week = data?.phases.flatMap((p) => p.weeks).find((w) => w.id === weekId);
+    if (week && week.sessions.length >= 7) {
+      throw new Error('Una semana no puede tener más de 7 sesiones.');
+    }
     const { error } = await supabase.from('sessions').insert({ week_id: weekId, session_number: nextSessionNumber });
     if (error) throw error;
     await refetch();

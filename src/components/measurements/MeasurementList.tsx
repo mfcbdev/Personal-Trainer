@@ -1,5 +1,8 @@
 import { Trash2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Card } from '../ui/Card';
+import { parseLocalDate } from '../../lib/scheduling';
 import type { BodyMeasurement } from '../../hooks/useMeasurements';
 
 interface MeasurementListProps {
@@ -18,6 +21,14 @@ function formatDelta(current: number | null, baseline: number | null) {
   };
 }
 
+function monthKey(isoDate: string) {
+  return format(parseLocalDate(isoDate), 'yyyy-MM');
+}
+
+function monthLabel(isoDate: string) {
+  return format(parseLocalDate(isoDate), "MMMM 'de' yyyy", { locale: es });
+}
+
 export function MeasurementList({ measurements, onDelete }: MeasurementListProps) {
   if (measurements.length === 0) {
     return <p className="text-sm text-zinc-500 text-center py-10">Aún no hay mediciones para este cliente.</p>;
@@ -25,43 +36,77 @@ export function MeasurementList({ measurements, onDelete }: MeasurementListProps
 
   const baseline = measurements[0];
 
-  return (
-    <div className="space-y-3">
-      {[...measurements].reverse().map((m) => {
-        const isBaseline = m.id === baseline.id;
-        const weightDelta = isBaseline ? null : formatDelta(m.weight, baseline.weight);
-        const fatDelta = isBaseline ? null : formatDelta(m.body_fat_pct, baseline.body_fat_pct);
-        const leanDelta = isBaseline ? null : formatDelta(m.lean_mass, baseline.lean_mass);
+  // Group by month, newest month first, cards within each month also newest first.
+  const groups = new Map<string, BodyMeasurement[]>();
+  for (const m of [...measurements].reverse()) {
+    const key = monthKey(m.measured_at);
+    const list = groups.get(key) ?? [];
+    list.push(m);
+    groups.set(key, list);
+  }
 
-        return (
-          <Card key={m.id}>
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-sm font-medium text-zinc-50">{m.measured_at}</p>
-                {isBaseline && <p className="text-xs text-zinc-500">Medición inicial</p>}
-              </div>
-              {onDelete && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (confirm('¿Eliminar esta medición?')) onDelete(m.id);
-                  }}
-                  className="text-zinc-500 hover:text-red-400"
-                  aria-label="Eliminar"
-                >
-                  <Trash2 size={16} />
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-4 gap-2 text-sm">
-              <MetricCell label="Peso" value={m.weight} suffix="kg" delta={weightDelta} />
-              <MetricCell label="% Grasa" value={m.body_fat_pct} suffix="%" delta={fatDelta} />
-              <MetricCell label="M. magra" value={m.lean_mass} suffix="kg" delta={leanDelta} />
-              <MetricCell label="IMC" value={m.bmi} />
-            </div>
-          </Card>
-        );
-      })}
+  return (
+    <div className="space-y-5">
+      {Array.from(groups.entries()).map(([key, group]) => (
+        <div key={key}>
+          <h4 className="text-xs font-medium text-zinc-500 uppercase mb-2 capitalize">
+            {monthLabel(group[0].measured_at)}
+          </h4>
+          <div className="space-y-3">
+            {group.map((m) => {
+              const isBaseline = m.id === baseline.id;
+              const weightDelta = isBaseline ? null : formatDelta(m.weight, baseline.weight);
+              const fatDelta = isBaseline ? null : formatDelta(m.body_fat_pct, baseline.body_fat_pct);
+              const leanDelta = isBaseline ? null : formatDelta(m.lean_mass, baseline.lean_mass);
+
+              const hasCircumferences =
+                m.waist != null || m.hip != null || m.thigh != null || m.biceps_circumference != null;
+              const waistDelta = isBaseline ? null : formatDelta(m.waist, baseline.waist);
+              const hipDelta = isBaseline ? null : formatDelta(m.hip, baseline.hip);
+              const thighDelta = isBaseline ? null : formatDelta(m.thigh, baseline.thigh);
+              const bicepsDelta = isBaseline
+                ? null
+                : formatDelta(m.biceps_circumference, baseline.biceps_circumference);
+              return (
+                <Card key={m.id}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="text-sm font-medium text-zinc-50">{m.measured_at}</p>
+                      {isBaseline && <p className="text-xs text-zinc-500">Medición inicial</p>}
+                    </div>
+                    {onDelete && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm('¿Eliminar esta medición?')) onDelete(m.id);
+                        }}
+                        className="text-zinc-500 hover:text-red-400"
+                        aria-label="Eliminar"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 text-sm">
+                    <MetricCell label="Peso" value={m.weight} suffix="kg" delta={weightDelta} />
+                    <MetricCell label="% Grasa" value={m.body_fat_pct} suffix="%" delta={fatDelta} />
+                    <MetricCell label="M. magra" value={m.lean_mass} suffix="kg" delta={leanDelta} />
+                    <MetricCell label="IMC" value={m.bmi} />
+                  </div>
+                  {hasCircumferences && (
+                    <div className="grid grid-cols-4 gap-2 text-sm mt-3 pt-3 border-t border-zinc-800">
+                      <MetricCell label="Cintura" value={m.waist} suffix="cm" delta={waistDelta} />
+                      <MetricCell label="Cadera" value={m.hip} suffix="cm" delta={hipDelta} />
+                      <MetricCell label="Muslo" value={m.thigh} suffix="cm" delta={thighDelta} />
+                      <MetricCell label="Bíceps" value={m.biceps_circumference} suffix="cm" delta={bicepsDelta} />
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

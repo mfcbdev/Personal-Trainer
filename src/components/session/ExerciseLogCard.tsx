@@ -1,49 +1,66 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { ActiveSetRow } from './ActiveSetRow';
-import { getYouTubeEmbedUrl, getYouTubeThumbnail } from '../../lib/youtube';
+import { resolveVideoSource } from '../../lib/video-source';
 import type { ActiveSessionExercise, SetUpdateFields } from '../../hooks/useActiveSession';
 
 interface ExerciseLogCardProps {
   item: ActiveSessionExercise;
   onUpdateSet: (setNumber: number, fields: SetUpdateFields) => void;
-  onAddSet: () => void;
-  onRemoveSet: (logId: string) => void;
 }
 
-export function ExerciseLogCard({ item, onUpdateSet, onAddSet, onRemoveSet }: ExerciseLogCardProps) {
-  const [videoOpen, setVideoOpen] = useState(false);
-  const thumbnail = item.exercise.video_url ? getYouTubeThumbnail(item.exercise.video_url) : null;
-  const embedUrl = item.exercise.video_url ? getYouTubeEmbedUrl(item.exercise.video_url) : null;
+// Extract the first integer from a planned reps string like "10-12" or "12".
+// Returns null when no digit is present (e.g. "AMRAP").
+function parsePlannedReps(text: string | null): number | null {
+  if (!text) return null;
+  const match = text.match(/\d+/);
+  return match ? Number(match[0]) : null;
+}
 
-  const setCount = Math.max(item.sets ?? 0, item.logs.length, 1);
+export function ExerciseLogCard({ item, onUpdateSet }: ExerciseLogCardProps) {
+  const [videoOpen, setVideoOpen] = useState(false);
+  // Strength-only component — cardio items are handled by CardioLogCard.
+  if (!item.exercise) return null;
+  const exercise = item.exercise;
+  const video = resolveVideoSource(exercise.video_url);
+
+  // Alumno can't add sets — session cardinality is fixed by the coach.
+  const setCount = Math.max(item.sets ?? 1, 1);
   const setNumbers = Array.from({ length: setCount }, (_, i) => i + 1);
+  const plannedReps = parsePlannedReps(item.reps);
 
   return (
     <Card>
       <div className="flex items-center gap-3 mb-3">
         <button
           type="button"
-          onClick={() => embedUrl && setVideoOpen(true)}
-          className="h-12 w-16 shrink-0 rounded bg-zinc-800 overflow-hidden"
+          onClick={() => video.playerUrl && setVideoOpen(true)}
+          disabled={!video.playerUrl}
+          className="h-12 w-16 shrink-0 rounded bg-zinc-800 overflow-hidden flex items-center justify-center"
         >
-          {thumbnail && <img src={thumbnail} alt="" className="h-full w-full object-cover" />}
+          {video.thumbnail ? (
+            <img src={video.thumbnail} alt="" className="h-full w-full object-cover" />
+          ) : video.kind === 'file' ? (
+            <Play size={16} className="text-zinc-400" />
+          ) : null}
         </button>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-zinc-50 truncate">{item.exercise.name}</p>
+          <p className="text-sm font-medium text-zinc-50 truncate">{exercise.name}</p>
           <p className="text-xs text-zinc-500">
             Meta: {item.sets ?? '-'} × {item.reps ?? '-'} {item.weight ? `· ${item.weight}kg` : ''}
           </p>
+          {item.notes && (
+            <p className="text-xs text-zinc-500 mt-1 italic">{item.notes}</p>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-[24px_1fr_1fr_1fr_36px_28px] gap-1.5 mb-1 px-0.5">
+      <div className="grid grid-cols-[24px_1fr_1fr_1fr_36px] gap-1.5 mb-1 px-0.5">
         <span />
         <span className="text-[10px] text-zinc-500 text-center">Reps</span>
         <span className="text-[10px] text-zinc-500 text-center">Kg</span>
-        <span className="text-[10px] text-zinc-500 text-center">RPE</span>
-        <span />
+        <span className="text-[10px] text-zinc-500 text-center">CF</span>
         <span />
       </div>
 
@@ -56,24 +73,20 @@ export function ExerciseLogCard({ item, onUpdateSet, onAddSet, onRemoveSet }: Ex
             setNumber={setNumber}
             log={log}
             ghost={ghost}
+            plannedReps={plannedReps}
             onUpdate={(fields) => onUpdateSet(setNumber, fields)}
-            onDelete={() => log && onRemoveSet(log.id)}
           />
         );
       })}
 
-      <button
-        type="button"
-        onClick={onAddSet}
-        className="mt-2 flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300"
-      >
-        <Plus size={14} /> Agregar set
-      </button>
-
-      {videoOpen && embedUrl && (
+      {videoOpen && video.playerUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setVideoOpen(false)}>
           <div className="w-full max-w-lg aspect-video" onClick={(e) => e.stopPropagation()}>
-            <iframe src={embedUrl} title={item.exercise.name} className="h-full w-full rounded-lg" allowFullScreen />
+            {video.kind === 'youtube' ? (
+              <iframe src={video.playerUrl} title={exercise.name} className="h-full w-full rounded-lg" allowFullScreen />
+            ) : (
+              <video src={video.playerUrl} controls autoPlay playsInline className="h-full w-full rounded-lg bg-black" />
+            )}
           </div>
         </div>
       )}

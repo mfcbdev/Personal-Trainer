@@ -31,3 +31,9 @@ export function calculateKarvonenZones(restingHr: number, maxHr: number): HRZone
 export function estimatedMaxHr(age: number): number {
   return 220 - age;
 }
+
+/** Karvonen bpm at a single target percentage of heart-rate reserve. */
+export function karvonenBpmAt(restingHr: number, maxHr: number, pct: number): number {
+  const hrr = maxHr - restingHr;
+  return Math.round(restingHr + hrr * (pct / 100));
+}
