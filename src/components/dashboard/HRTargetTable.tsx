@@ -43,23 +43,39 @@ type TargetValues = Partial<
   >
 >;
 
+// Text-backed value cache so the input reflects what the coach typed even
+// while the number parses to null (empty string) or NaN (mid-typing "-"). We
+// snapshot from evaluation on mount and on every evaluation swap.
+type DraftValues = Record<keyof TargetValues, string>;
+
+function draftFromEvaluation(evaluation: CardioEval | null): DraftValues {
+  const pick = (n: number | null | undefined) => (n == null ? '' : String(n));
+  return {
+    target_90_kmh: pick(evaluation?.target_90_kmh),
+    target_90_incline: pick(evaluation?.target_90_incline),
+    target_80_kmh: pick(evaluation?.target_80_kmh),
+    target_80_incline: pick(evaluation?.target_80_incline),
+    target_70_kmh: pick(evaluation?.target_70_kmh),
+    target_70_incline: pick(evaluation?.target_70_incline),
+    target_60_kmh: pick(evaluation?.target_60_kmh),
+    target_60_incline: pick(evaluation?.target_60_incline),
+  };
+}
+
 export function HRTargetTable({ restingHr, maxHr, evaluation, onSaved }: HRTargetTableProps) {
   const { showError, showSuccess } = useToast();
-  const [values, setValues] = useState<TargetValues>({});
+  // Seed synchronously so first render already shows the stored values —
+  // useEffect ran AFTER commit, which combined with uncontrolled inputs left
+  // the fields blank until manual edit.
+  const [draft, setDraft] = useState<DraftValues>(() => draftFromEvaluation(evaluation));
+  const evaluationId = evaluation?.id ?? null;
 
   useEffect(() => {
-    if (!evaluation) return;
-    setValues({
-      target_90_kmh: evaluation.target_90_kmh,
-      target_90_incline: evaluation.target_90_incline,
-      target_80_kmh: evaluation.target_80_kmh,
-      target_80_incline: evaluation.target_80_incline,
-      target_70_kmh: evaluation.target_70_kmh,
-      target_70_incline: evaluation.target_70_incline,
-      target_60_kmh: evaluation.target_60_kmh,
-      target_60_incline: evaluation.target_60_incline,
-    });
-  }, [evaluation]);
+    setDraft(draftFromEvaluation(evaluation));
+    // We only want to resync when the underlying row switches; the draft
+    // itself is the source of truth for what's on screen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [evaluationId]);
 
   async function persist(patch: TargetValues) {
     if (!evaluation) {
@@ -115,9 +131,10 @@ export function HRTargetTable({ restingHr, maxHr, evaluation, onSaved }: HRTarge
                     type="number"
                     inputMode="decimal"
                     step="0.1"
-                    defaultValue={values[row.kmhField] ?? ''}
-                    key={`kmh-${row.pct}-${evaluation?.id ?? 'new'}`}
+                    value={draft[row.kmhField]}
+                    onChange={(e) => setDraft((d) => ({ ...d, [row.kmhField]: e.target.value }))}
                     onBlur={(e) => handleBlur(row.kmhField, e.target.value)}
+                    aria-label={`Velocidad (km/h) al ${row.pct}%`}
                     className="h-9 w-full rounded-lg border border-zinc-800 bg-base px-2 text-sm text-zinc-50 outline-none focus:border-accent"
                   />
                 </td>
@@ -126,9 +143,10 @@ export function HRTargetTable({ restingHr, maxHr, evaluation, onSaved }: HRTarge
                     type="number"
                     inputMode="decimal"
                     step="0.1"
-                    defaultValue={values[row.inclineField] ?? ''}
-                    key={`incline-${row.pct}-${evaluation?.id ?? 'new'}`}
+                    value={draft[row.inclineField]}
+                    onChange={(e) => setDraft((d) => ({ ...d, [row.inclineField]: e.target.value }))}
                     onBlur={(e) => handleBlur(row.inclineField, e.target.value)}
+                    aria-label={`Inclinación (%) al ${row.pct}%`}
                     className="h-9 w-full rounded-lg border border-zinc-800 bg-base px-2 text-sm text-zinc-50 outline-none focus:border-accent"
                   />
                 </td>

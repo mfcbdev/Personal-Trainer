@@ -22,7 +22,7 @@ interface ExerciseFormModalProps {
 export function ExerciseFormModal({ open, exercise, onClose, onSubmit }: ExerciseFormModalProps) {
   const { showError, showSuccess } = useToast();
   const [submitting, setSubmitting] = useState(false);
-  const { uploadVideo, uploading } = useExerciseVideoUpload();
+  const { uploadVideo, deleteVideoByUrl, uploading } = useExerciseVideoUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -57,10 +57,16 @@ export function ExerciseFormModal({ open, exercise, onClose, onSubmit }: Exercis
   async function handleFile(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
+    // Remember the URL currently in the form so we can clean it up once the
+    // new upload succeeds. Without this, every re-upload leaves the previous
+    // file permanently orphaned in the exercise-media bucket.
+    const previousUrl = videoUrl;
     try {
       const url = await uploadVideo(file);
       setValue('videoUrl', url, { shouldValidate: true });
       showSuccess('Video subido.');
+      // Best-effort cleanup — no-op for YouTube URLs or foreign hosts.
+      await deleteVideoByUrl(previousUrl);
     } catch (err) {
       showError(err instanceof Error ? err.message : 'No se pudo subir el video.');
     } finally {

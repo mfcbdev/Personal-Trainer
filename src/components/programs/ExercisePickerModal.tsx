@@ -225,7 +225,7 @@ function StrengthPicker({
 }
 
 function CardioInformalForm({ onSubmit }: { onSubmit: (payload: CardioInformalPayload) => void }) {
-  const [minutes, setMinutes] = useState(30);
+  const [minutes, setMinutes] = useState<number | null>(30);
   const [observations, setObservations] = useState('');
 
   return (
@@ -233,7 +233,7 @@ function CardioInformalForm({ onSubmit }: { onSubmit: (payload: CardioInformalPa
       <p className="text-xs text-zinc-500">Caminata — sólo duración y observaciones.</p>
       <div>
         <label className="block text-sm text-zinc-400 mb-2">Duración total (min)</label>
-        <NumberStepper value={minutes} onChange={setMinutes} min={1} max={240} suffix="min" />
+        <NumberStepper value={minutes ?? 0} onChange={setMinutes} min={1} max={240} suffix="min" />
       </div>
       <div>
         <label className="block text-sm text-zinc-400 mb-1.5">Observaciones</label>
@@ -251,7 +251,7 @@ function CardioInformalForm({ onSubmit }: { onSubmit: (payload: CardioInformalPa
         className="w-full"
         onClick={() =>
           onSubmit({
-            total_minutes: minutes || null,
+            total_minutes: minutes,
             observations: observations.trim() || null,
           })
         }
@@ -264,10 +264,10 @@ function CardioInformalForm({ onSubmit }: { onSubmit: (payload: CardioInformalPa
 
 function CardioFormalForm({ onSubmit }: { onSubmit: (payload: CardioFormalPayload) => void }) {
   const [modality, setModality] = useState<CardioModality>('cinta');
-  const [rounds, setRounds] = useState(6);
-  const [work, setWork] = useState(60);
-  const [rest, setRest] = useState(30);
-  const [recovery, setRecovery] = useState(0);
+  const [rounds, setRounds] = useState<number | null>(6);
+  const [work, setWork] = useState<number | null>(60);
+  const [rest, setRest] = useState<number | null>(30);
+  const [recovery, setRecovery] = useState<number | null>(0);
   const [incline, setIncline] = useState('');
   const [intensity, setIntensity] = useState('');
   const [observations, setObservations] = useState('');
@@ -331,11 +331,11 @@ function CardioFormalForm({ onSubmit }: { onSubmit: (payload: CardioFormalPayloa
         onClick={() =>
           onSubmit({
             cardio_modality: modality,
-            rounds: rounds || null,
-            work_seconds: work || null,
-            rest_seconds: rest || null,
-            recovery_seconds: recovery || null,
-            incline: incline ? Number(incline) : null,
+            rounds,
+            work_seconds: work,
+            rest_seconds: rest,
+            recovery_seconds: recovery,
+            incline: incline === '' ? null : Number(incline),
             intensity: intensity.trim() || null,
             observations: observations.trim() || null,
           })
@@ -353,16 +353,16 @@ function NumField({
   onChange,
 }: {
   label: string;
-  value: number;
-  onChange: (v: number) => void;
+  value: number | null;
+  onChange: (v: number | null) => void;
 }) {
   return (
     <div>
       <label className="block text-sm text-zinc-400 mb-1.5">{label}</label>
       <input
         type="number"
-        value={value || ''}
-        onChange={(e) => onChange(e.target.value ? Number(e.target.value) : 0)}
+        value={value ?? ''}
+        onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
         className="h-11 w-full rounded-lg border border-zinc-800 bg-base px-3 text-sm text-zinc-50 outline-none focus:border-accent"
       />
     </div>

@@ -17,7 +17,7 @@ import { Card } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { PhasePill } from '../../components/dashboard/PhasePill';
 import { useTrainerCalendar, type TrainerCalendarSession } from '../../hooks/useTrainerCalendar';
-import { getCurrentWeekStart, toISODate, WEEKDAY_LABELS } from '../../lib/scheduling';
+import { getCurrentWeekStart, getMondayOf, toISODate, WEEKDAY_LABELS } from '../../lib/scheduling';
 import { cn } from '../../utils/cn';
 
 type ViewMode = 'week' | 'month';
@@ -48,6 +48,10 @@ export default function TrainerCalendar() {
 
   function selectDate(date: Date) {
     setSelectedDate(date);
+    // Anchor the WeekStrip to the Monday of the clicked date — otherwise a
+    // day picked from MonthGrid can fall outside the strip's 7-day window
+    // when we flip back to week view.
+    setWeekStart(getMondayOf(date));
     setMode('week');
   }
 
