@@ -4,6 +4,8 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { WeightChart } from '../../components/progress/WeightChart';
 import { BodyCompositionChart } from '../../components/progress/BodyCompositionChart';
 import { VolumeChart } from '../../components/progress/VolumeChart';
+import { WeeklyComparisonChart } from '../../components/progress/WeeklyComparisonChart';
+import { BaseExerciseList } from '../../components/progress/BaseExerciseList';
 import { MuscleHeatmap } from '../../components/progress/MuscleHeatmap';
 import { MeasurementList } from '../../components/measurements/MeasurementList';
 import { useClientProgress } from '../../hooks/useClientProgress';
@@ -12,7 +14,8 @@ import { useAuth } from '../../contexts/AuthContext';
 
 export default function ProgressPage() {
   const { user } = useAuth();
-  const { weightHistory, compositionHistory, weeklyVolume, loading } = useClientProgress();
+  const { weightHistory, compositionHistory, weeklyVolume, weeklyComparison, baseExercises, loading } =
+    useClientProgress();
   const { measurements, loading: measurementsLoading } = useMeasurements(user?.id);
 
   return (
@@ -36,8 +39,18 @@ export default function ProgressPage() {
         </Card>
 
         <Card>
+          <h3 className="text-xs font-medium text-zinc-500 uppercase mb-2">Últimas 4 semanas</h3>
+          {loading ? <Skeleton className="h-64" /> : <WeeklyComparisonChart data={weeklyComparison} />}
+        </Card>
+
+        <Card>
           <h3 className="text-xs font-medium text-zinc-500 uppercase mb-2">Mapa muscular</h3>
           {loading ? <Skeleton className="h-64" /> : <MuscleHeatmap data={weeklyVolume} />}
+        </Card>
+
+        <Card>
+          <h3 className="text-xs font-medium text-zinc-500 uppercase mb-1">Ejercicios base</h3>
+          {loading ? <Skeleton className="h-24" /> : <BaseExerciseList items={baseExercises} />}
         </Card>
 
         <Card>
