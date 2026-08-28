@@ -8,6 +8,8 @@ export type DailyStatus = 'achieved' | 'in_progress' | 'missed';
 export type SubscriptionPlan = 'free' | 'pro' | 'premium';
 export type ProgramTemplateType = 'strength' | 'hypertrophy' | 'hiit' | 'mobility' | 'general';
 export type PhotoPose = 'frente' | 'perfil' | 'espalda';
+export type SessionItemType = 'strength' | 'cardio_informal' | 'cardio_formal';
+export type CardioModality = 'caminata' | 'cinta' | 'eliptica' | 'estatica';
 
 export interface Database {
   public: {
@@ -234,19 +236,29 @@ export interface Database {
         Row: {
           id: string;
           session_id: string;
-          exercise_id: string;
+          exercise_id: string | null;
           order_index: number;
+          item_type: SessionItemType;
           sets: number | null;
           reps: string | null;
           weight: number | null;
           rir_rpe: string | null;
           rest: string | null;
           notes: string | null;
+          cardio_modality: CardioModality | null;
+          total_minutes: number | null;
+          rounds: number | null;
+          work_seconds: number | null;
+          rest_seconds: number | null;
+          recovery_seconds: number | null;
+          incline: number | null;
+          intensity: string | null;
+          observations: string | null;
+          completed: boolean;
           created_at: string;
         };
         Insert: Partial<Database['public']['Tables']['session_exercises']['Row']> & {
           session_id: string;
-          exercise_id: string;
         };
         Update: Partial<Database['public']['Tables']['session_exercises']['Row']>;
         Relationships: [];

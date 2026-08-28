@@ -5,10 +5,12 @@ import type { Exercise } from './useExercises';
 
 type Session = Database['public']['Tables']['sessions']['Row'];
 type SessionExercise = Database['public']['Tables']['session_exercises']['Row'];
+type SessionExerciseInsert = Database['public']['Tables']['session_exercises']['Insert'];
 type SessionExerciseUpdate = Database['public']['Tables']['session_exercises']['Update'];
 
+/** exercise is null for cardio_informal / cardio_formal items. */
 export interface SessionExerciseWithExercise extends SessionExercise {
-  exercise: Exercise;
+  exercise: Exercise | null;
 }
 
 export function useSessionDetail(sessionId: string | undefined) {
@@ -54,10 +56,23 @@ export function useSessionDetail(sessionId: string | undefined) {
       session_id: sessionId,
       exercise_id: exerciseId,
       order_index: nextOrder,
+      item_type: 'strength',
       sets: config.sets ?? 3,
       reps: config.reps ?? '10-12',
       weight: config.weight ?? null,
       rest: '60s',
+    });
+    if (error) throw error;
+    await refetch();
+  }
+
+  async function addCardioItem(fields: Omit<SessionExerciseInsert, 'session_id' | 'order_index'>) {
+    if (!sessionId) return;
+    const nextOrder = items.length;
+    const { error } = await supabase.from('session_exercises').insert({
+      session_id: sessionId,
+      order_index: nextOrder,
+      ...fields,
     });
     if (error) throw error;
     await refetch();
@@ -84,5 +99,16 @@ export function useSessionDetail(sessionId: string | undefined) {
     );
   }
 
-  return { session, items, loading, refetch, updateSessionMeta, addExercise, updateItem, removeItem, reorder };
+  return {
+    session,
+    items,
+    loading,
+    refetch,
+    updateSessionMeta,
+    addExercise,
+    addCardioItem,
+    updateItem,
+    removeItem,
+    reorder,
+  };
 }

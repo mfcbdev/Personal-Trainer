@@ -20,7 +20,10 @@ function parsePlannedReps(text: string | null): number | null {
 
 export function ExerciseLogCard({ item, onUpdateSet }: ExerciseLogCardProps) {
   const [videoOpen, setVideoOpen] = useState(false);
-  const video = resolveVideoSource(item.exercise.video_url);
+  // Strength-only component — cardio items are handled by CardioLogCard.
+  if (!item.exercise) return null;
+  const exercise = item.exercise;
+  const video = resolveVideoSource(exercise.video_url);
 
   // Alumno can't add sets — session cardinality is fixed by the coach.
   const setCount = Math.max(item.sets ?? 1, 1);
@@ -43,7 +46,7 @@ export function ExerciseLogCard({ item, onUpdateSet }: ExerciseLogCardProps) {
           ) : null}
         </button>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-zinc-50 truncate">{item.exercise.name}</p>
+          <p className="text-sm font-medium text-zinc-50 truncate">{exercise.name}</p>
           <p className="text-xs text-zinc-500">
             Meta: {item.sets ?? '-'} × {item.reps ?? '-'} {item.weight ? `· ${item.weight}kg` : ''}
           </p>
@@ -80,7 +83,7 @@ export function ExerciseLogCard({ item, onUpdateSet }: ExerciseLogCardProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setVideoOpen(false)}>
           <div className="w-full max-w-lg aspect-video" onClick={(e) => e.stopPropagation()}>
             {video.kind === 'youtube' ? (
-              <iframe src={video.playerUrl} title={item.exercise.name} className="h-full w-full rounded-lg" allowFullScreen />
+              <iframe src={video.playerUrl} title={exercise.name} className="h-full w-full rounded-lg" allowFullScreen />
             ) : (
               <video src={video.playerUrl} controls autoPlay playsInline className="h-full w-full rounded-lg bg-black" />
             )}

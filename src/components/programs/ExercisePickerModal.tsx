@@ -7,6 +7,9 @@ import { ExerciseFilters, defaultExerciseFilters, type ExerciseFilterState } fro
 import { NumberStepper } from '../onboarding/NumberStepper';
 import { useExercises, type Exercise } from '../../hooks/useExercises';
 import { resolveVideoSource } from '../../lib/video-source';
+import { CARDIO_MODALITY_LABELS } from '../../lib/constants';
+import type { CardioModality } from '../../lib/database.types';
+import { cn } from '../../utils/cn';
 
 export interface ExerciseQuickConfig {
   sets: number | null;
@@ -14,13 +17,118 @@ export interface ExerciseQuickConfig {
   weight: number | null;
 }
 
+export interface CardioInformalPayload {
+  total_minutes: number | null;
+  observations: string | null;
+}
+
+export interface CardioFormalPayload {
+  cardio_modality: CardioModality;
+  rounds: number | null;
+  work_seconds: number | null;
+  rest_seconds: number | null;
+  recovery_seconds: number | null;
+  incline: number | null;
+  intensity: string | null;
+  observations: string | null;
+}
+
 interface ExercisePickerModalProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (exerciseId: string, config: ExerciseQuickConfig) => void;
+  onSelectExercise: (exerciseId: string, config: ExerciseQuickConfig) => void;
+  onSelectCardioInformal: (payload: CardioInformalPayload) => void;
+  onSelectCardioFormal: (payload: CardioFormalPayload) => void;
 }
 
-export function ExercisePickerModal({ open, onClose, onSelect }: ExercisePickerModalProps) {
+type Mode = 'strength' | 'cardio_informal' | 'cardio_formal';
+
+const FORMAL_MODALITIES: CardioModality[] = ['cinta', 'eliptica', 'estatica'];
+
+export function ExercisePickerModal({
+  open,
+  onClose,
+  onSelectExercise,
+  onSelectCardioInformal,
+  onSelectCardioFormal,
+}: ExercisePickerModalProps) {
+  const [mode, setMode] = useState<Mode>('strength');
+
+  function reset() {
+    setMode('strength');
+    onClose();
+  }
+
+  return (
+    <Modal open={open} onClose={reset} title="Agregar">
+      <div className="flex gap-2 mb-4">
+        <ModeChip active={mode === 'strength'} onClick={() => setMode('strength')}>
+          Ejercicio
+        </ModeChip>
+        <ModeChip active={mode === 'cardio_informal'} onClick={() => setMode('cardio_informal')}>
+          Cardio informal
+        </ModeChip>
+        <ModeChip active={mode === 'cardio_formal'} onClick={() => setMode('cardio_formal')}>
+          Cardio formal
+        </ModeChip>
+      </div>
+
+      {mode === 'strength' && (
+        <StrengthPicker
+          onSelect={(id, config) => {
+            onSelectExercise(id, config);
+            reset();
+          }}
+        />
+      )}
+      {mode === 'cardio_informal' && (
+        <CardioInformalForm
+          onSubmit={(payload) => {
+            onSelectCardioInformal(payload);
+            reset();
+          }}
+        />
+      )}
+      {mode === 'cardio_formal' && (
+        <CardioFormalForm
+          onSubmit={(payload) => {
+            onSelectCardioFormal(payload);
+            reset();
+          }}
+        />
+      )}
+    </Modal>
+  );
+}
+
+function ModeChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'h-8 px-3 rounded-full text-xs font-medium shrink-0',
+        active ? 'bg-accent text-zinc-950' : 'bg-surface text-zinc-400',
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function StrengthPicker({
+  onSelect,
+}: {
+  onSelect: (exerciseId: string, config: ExerciseQuickConfig) => void;
+}) {
   const { exercises, loading } = useExercises();
   const [filters, setFilters] = useState<ExerciseFilterState>(defaultExerciseFilters);
   const [picked, setPicked] = useState<Exercise | null>(null);
@@ -39,24 +147,10 @@ export function ExercisePickerModal({ open, onClose, onSelect }: ExercisePickerM
     });
   }, [exercises, filters]);
 
-  function handleClose() {
-    setPicked(null);
-    setSets(3);
-    setReps('10-12');
-    setWeight(0);
-    onClose();
-  }
-
-  function handleConfirm() {
-    if (!picked) return;
-    onSelect(picked.id, { sets, reps, weight: weight || null });
-    handleClose();
-  }
-
   if (picked) {
     const video = resolveVideoSource(picked.video_url);
     return (
-      <Modal open={open} onClose={handleClose} title="Configurar ejercicio">
+      <>
         <button
           type="button"
           onClick={() => setPicked(null)}
@@ -100,17 +194,21 @@ export function ExercisePickerModal({ open, onClose, onSelect }: ExercisePickerM
           </div>
         </div>
 
-        <Button type="button" size="lg" className="w-full" onClick={handleConfirm}>
+        <Button
+          type="button"
+          size="lg"
+          className="w-full"
+          onClick={() => onSelect(picked.id, { sets, reps, weight: weight || null })}
+        >
           Agregar a la sesión
         </Button>
-      </Modal>
+      </>
     );
   }
 
   return (
-    <Modal open={open} onClose={handleClose} title="Agregar ejercicio">
+    <>
       <ExerciseFilters value={filters} onChange={setFilters} />
-
       {loading ? (
         <p className="text-sm text-zinc-500 text-center py-6">Cargando...</p>
       ) : filtered.length === 0 ? (
@@ -122,6 +220,151 @@ export function ExercisePickerModal({ open, onClose, onSelect }: ExercisePickerM
           ))}
         </div>
       )}
-    </Modal>
+    </>
+  );
+}
+
+function CardioInformalForm({ onSubmit }: { onSubmit: (payload: CardioInformalPayload) => void }) {
+  const [minutes, setMinutes] = useState(30);
+  const [observations, setObservations] = useState('');
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-zinc-500">Caminata — sólo duración y observaciones.</p>
+      <div>
+        <label className="block text-sm text-zinc-400 mb-2">Duración total (min)</label>
+        <NumberStepper value={minutes} onChange={setMinutes} min={1} max={240} suffix="min" />
+      </div>
+      <div>
+        <label className="block text-sm text-zinc-400 mb-1.5">Observaciones</label>
+        <textarea
+          rows={3}
+          value={observations}
+          onChange={(e) => setObservations(e.target.value)}
+          placeholder="Opcional"
+          className="w-full rounded-lg border border-zinc-800 bg-base px-3 py-2 text-sm text-zinc-50 outline-none focus:border-accent"
+        />
+      </div>
+      <Button
+        type="button"
+        size="lg"
+        className="w-full"
+        onClick={() =>
+          onSubmit({
+            total_minutes: minutes || null,
+            observations: observations.trim() || null,
+          })
+        }
+      >
+        Agregar cardio informal
+      </Button>
+    </div>
+  );
+}
+
+function CardioFormalForm({ onSubmit }: { onSubmit: (payload: CardioFormalPayload) => void }) {
+  const [modality, setModality] = useState<CardioModality>('cinta');
+  const [rounds, setRounds] = useState(6);
+  const [work, setWork] = useState(60);
+  const [rest, setRest] = useState(30);
+  const [recovery, setRecovery] = useState(0);
+  const [incline, setIncline] = useState('');
+  const [intensity, setIntensity] = useState('');
+  const [observations, setObservations] = useState('');
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-sm text-zinc-400 mb-1.5">Modalidad</label>
+        <select
+          value={modality}
+          onChange={(e) => setModality(e.target.value as CardioModality)}
+          className="h-11 w-full rounded-lg border border-zinc-800 bg-base px-3 text-sm text-zinc-50 outline-none focus:border-accent"
+        >
+          {FORMAL_MODALITIES.map((m) => (
+            <option key={m} value={m}>
+              {CARDIO_MODALITY_LABELS[m]}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <NumField label="Rondas" value={rounds} onChange={setRounds} />
+        <NumField label="Trabajo (s)" value={work} onChange={setWork} />
+        <NumField label="Descanso (s)" value={rest} onChange={setRest} />
+        <NumField label="Recuperación (s)" value={recovery} onChange={setRecovery} />
+        <div>
+          <label className="block text-sm text-zinc-400 mb-1.5">Inclinación (%)</label>
+          <input
+            type="number"
+            step="0.5"
+            value={incline}
+            onChange={(e) => setIncline(e.target.value)}
+            className="h-11 w-full rounded-lg border border-zinc-800 bg-base px-3 text-sm text-zinc-50 outline-none focus:border-accent"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-zinc-400 mb-1.5">Intensidad</label>
+          <input
+            type="text"
+            value={intensity}
+            onChange={(e) => setIntensity(e.target.value)}
+            placeholder="Ej. Zona 4"
+            className="h-11 w-full rounded-lg border border-zinc-800 bg-base px-3 text-sm text-zinc-50 outline-none focus:border-accent"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm text-zinc-400 mb-1.5">Observaciones</label>
+        <textarea
+          rows={2}
+          value={observations}
+          onChange={(e) => setObservations(e.target.value)}
+          placeholder="Opcional"
+          className="w-full rounded-lg border border-zinc-800 bg-base px-3 py-2 text-sm text-zinc-50 outline-none focus:border-accent"
+        />
+      </div>
+      <Button
+        type="button"
+        size="lg"
+        className="w-full"
+        onClick={() =>
+          onSubmit({
+            cardio_modality: modality,
+            rounds: rounds || null,
+            work_seconds: work || null,
+            rest_seconds: rest || null,
+            recovery_seconds: recovery || null,
+            incline: incline ? Number(incline) : null,
+            intensity: intensity.trim() || null,
+            observations: observations.trim() || null,
+          })
+        }
+      >
+        Agregar cardio formal
+      </Button>
+    </div>
+  );
+}
+
+function NumField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-sm text-zinc-400 mb-1.5">{label}</label>
+      <input
+        type="number"
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value ? Number(e.target.value) : 0)}
+        className="h-11 w-full rounded-lg border border-zinc-800 bg-base px-3 text-sm text-zinc-50 outline-none focus:border-accent"
+      />
+    </div>
   );
 }

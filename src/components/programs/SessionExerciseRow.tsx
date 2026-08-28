@@ -21,7 +21,10 @@ interface SessionExerciseRowProps {
 
 export function SessionExerciseRow({ item, onUpdate, onRemove, dragProps }: SessionExerciseRowProps) {
   const [expanded, setExpanded] = useState(false);
-  const video = resolveVideoSource(item.exercise.video_url);
+  // Strength-only component — cardio items are handled by SessionCardioRow.
+  if (!item.exercise) return null;
+  const exercise = item.exercise;
+  const video = resolveVideoSource(exercise.video_url);
 
   return (
     <div
@@ -41,7 +44,7 @@ export function SessionExerciseRow({ item, onUpdate, onRemove, dragProps }: Sess
           ) : null}
         </div>
         <button type="button" onClick={() => setExpanded((e) => !e)} className="flex-1 text-left min-w-0">
-          <p className="text-sm text-zinc-50 truncate">{item.exercise.name}</p>
+          <p className="text-sm text-zinc-50 truncate">{exercise.name}</p>
           <p className="text-xs text-zinc-500">
             {item.sets ?? '-'} × {item.reps ?? '-'} {item.weight ? `· ${item.weight}kg` : ''}
           </p>

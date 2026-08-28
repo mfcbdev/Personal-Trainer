@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { SessionExerciseRow } from '../../components/programs/SessionExerciseRow';
+import { SessionCardioRow } from '../../components/programs/SessionCardioRow';
 import { ExercisePickerModal } from '../../components/programs/ExercisePickerModal';
 import { useSessionDetail } from '../../hooks/useSessionDetail';
 import { useToast } from '../../contexts/ToastContext';
@@ -14,7 +15,7 @@ export default function SessionEditor() {
   const { id: clientId, pid: programId, sid: sessionId } = useParams<{ id: string; pid: string; sid: string }>();
   const navigate = useNavigate();
   const { showError, showSuccess } = useToast();
-  const { session, items, loading, updateSessionMeta, addExercise, updateItem, removeItem, reorder } =
+  const { session, items, loading, updateSessionMeta, addExercise, addCardioItem, updateItem, removeItem, reorder } =
     useSessionDetail(sessionId);
   const [pickerOpen, setPickerOpen] = useState(false);
   const dragIndex = useRef<number | null>(null);
@@ -70,26 +71,37 @@ export default function SessionEditor() {
       </div>
 
       <div className="space-y-2 mb-3">
-        {items.map((item, index) => (
-          <SessionExerciseRow
-            key={item.id}
-            item={item}
-            onUpdate={(fields) => updateItem(item.id, fields)}
-            onRemove={() => removeItem(item.id)}
-            dragProps={{
-              draggable: true,
-              onDragStart: () => {
-                dragIndex.current = index;
-              },
-              onDragOver: (e) => e.preventDefault(),
-              onDrop: () => handleDrop(index),
-            }}
-          />
-        ))}
+        {items.map((item, index) => {
+          const dragProps = {
+            draggable: true,
+            onDragStart: () => {
+              dragIndex.current = index;
+            },
+            onDragOver: (e: React.DragEvent) => e.preventDefault(),
+            onDrop: () => handleDrop(index),
+          };
+          return item.item_type === 'strength' ? (
+            <SessionExerciseRow
+              key={item.id}
+              item={item}
+              onUpdate={(fields) => updateItem(item.id, fields)}
+              onRemove={() => removeItem(item.id)}
+              dragProps={dragProps}
+            />
+          ) : (
+            <SessionCardioRow
+              key={item.id}
+              item={item}
+              onUpdate={(fields) => updateItem(item.id, fields)}
+              onRemove={() => removeItem(item.id)}
+              dragProps={dragProps}
+            />
+          );
+        })}
       </div>
 
       <Button type="button" variant="secondary" className="w-full mb-6" onClick={() => setPickerOpen(true)}>
-        <Plus size={18} className="mr-1.5" /> Agregar ejercicio
+        <Plus size={18} className="mr-1.5" /> Agregar
       </Button>
 
       <div className="flex gap-3">
@@ -101,7 +113,13 @@ export default function SessionEditor() {
         </Button>
       </div>
 
-      <ExercisePickerModal open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={addExercise} />
+      <ExercisePickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelectExercise={addExercise}
+        onSelectCardioInformal={(fields) => addCardioItem({ item_type: 'cardio_informal', ...fields })}
+        onSelectCardioFormal={(fields) => addCardioItem({ item_type: 'cardio_formal', ...fields })}
+      />
     </div>
   );
 }

@@ -20,8 +20,13 @@ export interface SetUpdateFields {
   completed?: boolean;
 }
 
+/**
+ * Item as rendered on the active session page. Strength items have `exercise`
+ * populated and use set_logs / ghosts; cardio items (item_type != 'strength')
+ * have `exercise = null` and completion lives on session_exercises.completed.
+ */
 export interface ActiveSessionExercise extends SessionExercise {
-  exercise: Exercise;
+  exercise: Exercise | null;
   logs: SetLog[];
   ghosts: GhostValue[];
 }
@@ -48,6 +53,11 @@ export function useActiveSession(sessionId: string | undefined) {
 
     const withLogsAndGhosts = await Promise.all(
       sessionExercises.map(async (se) => {
+        // Cardio items have no set_logs and no ghost lookup — bail early.
+        if (se.item_type !== 'strength' || !se.exercise_id) {
+          return { ...se, logs: [], ghosts: [] as GhostValue[] };
+        }
+
         const { data: logs } = await supabase
           .from('set_logs')
           .select('*')
@@ -141,5 +151,24 @@ export function useActiveSession(sessionId: string | undefined) {
     await refetch();
   }
 
-  return { session, items, loading, refetch, upsertSetLog, addSet, removeSetLog, completeWorkout };
+  async function setCardioCompleted(sessionExerciseId: string, completed: boolean) {
+    const { error } = await supabase
+      .from('session_exercises')
+      .update({ completed })
+      .eq('id', sessionExerciseId);
+    if (error) throw error;
+    setItems((prev) => prev.map((i) => (i.id === sessionExerciseId ? { ...i, completed } : i)));
+  }
+
+  return {
+    session,
+    items,
+    loading,
+    refetch,
+    upsertSetLog,
+    addSet,
+    removeSetLog,
+    setCardioCompleted,
+    completeWorkout,
+  };
 }
