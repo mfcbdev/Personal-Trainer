@@ -1,7 +1,7 @@
 import { useState, type DragEvent, type ReactNode } from 'react';
-import { GripVertical, ChevronDown, Trash2 } from 'lucide-react';
+import { GripVertical, ChevronDown, Trash2, Play } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import { getYouTubeThumbnail } from '../../lib/youtube';
+import { resolveVideoSource } from '../../lib/video-source';
 import type { SessionExerciseWithExercise } from '../../hooks/useSessionDetail';
 import type { Database } from '../../lib/database.types';
 
@@ -21,7 +21,7 @@ interface SessionExerciseRowProps {
 
 export function SessionExerciseRow({ item, onUpdate, onRemove, dragProps }: SessionExerciseRowProps) {
   const [expanded, setExpanded] = useState(false);
-  const thumb = item.exercise.video_url ? getYouTubeThumbnail(item.exercise.video_url) : null;
+  const video = resolveVideoSource(item.exercise.video_url);
 
   return (
     <div
@@ -33,8 +33,12 @@ export function SessionExerciseRow({ item, onUpdate, onRemove, dragProps }: Sess
     >
       <div className="flex items-center gap-2 p-3">
         <GripVertical size={16} className="text-zinc-600 cursor-grab shrink-0" />
-        <div className="h-10 w-14 shrink-0 rounded bg-zinc-800 overflow-hidden">
-          {thumb && <img src={thumb} alt="" className="h-full w-full object-cover" />}
+        <div className="h-10 w-14 shrink-0 rounded bg-zinc-800 overflow-hidden flex items-center justify-center">
+          {video.thumbnail ? (
+            <img src={video.thumbnail} alt="" className="h-full w-full object-cover" />
+          ) : video.kind === 'file' ? (
+            <Play size={14} className="text-zinc-500" />
+          ) : null}
         </div>
         <button type="button" onClick={() => setExpanded((e) => !e)} className="flex-1 text-left min-w-0">
           <p className="text-sm text-zinc-50 truncate">{item.exercise.name}</p>

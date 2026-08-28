@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Play } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { ExerciseCard } from '../exercises/ExerciseCard';
 import { ExerciseFilters, defaultExerciseFilters, type ExerciseFilterState } from '../exercises/ExerciseFilters';
 import { NumberStepper } from '../onboarding/NumberStepper';
 import { useExercises, type Exercise } from '../../hooks/useExercises';
-import { getYouTubeThumbnail } from '../../lib/youtube';
+import { resolveVideoSource } from '../../lib/video-source';
 
 export interface ExerciseQuickConfig {
   sets: number | null;
@@ -54,7 +54,7 @@ export function ExercisePickerModal({ open, onClose, onSelect }: ExercisePickerM
   }
 
   if (picked) {
-    const thumb = picked.video_url ? getYouTubeThumbnail(picked.video_url) : null;
+    const video = resolveVideoSource(picked.video_url);
     return (
       <Modal open={open} onClose={handleClose} title="Configurar ejercicio">
         <button
@@ -66,8 +66,12 @@ export function ExercisePickerModal({ open, onClose, onSelect }: ExercisePickerM
         </button>
 
         <div className="flex items-center gap-3 mb-5">
-          <div className="h-14 w-20 shrink-0 rounded bg-zinc-800 overflow-hidden">
-            {thumb && <img src={thumb} alt="" className="h-full w-full object-cover" />}
+          <div className="h-14 w-20 shrink-0 rounded bg-zinc-800 overflow-hidden flex items-center justify-center">
+            {video.thumbnail ? (
+              <img src={video.thumbnail} alt="" className="h-full w-full object-cover" />
+            ) : video.kind === 'file' ? (
+              <Play size={18} className="text-zinc-500" />
+            ) : null}
           </div>
           <div>
             <p className="text-sm font-medium text-zinc-50">{picked.name}</p>

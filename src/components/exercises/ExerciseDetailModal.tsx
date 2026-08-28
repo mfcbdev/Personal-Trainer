@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { getYouTubeEmbedUrl } from '../../lib/youtube';
+import { resolveVideoSource } from '../../lib/video-source';
 import { ZONE_LABELS, MOVEMENT_TYPE_LABELS } from '../../lib/constants';
 import type { Exercise } from '../../hooks/useExercises';
 
@@ -19,7 +19,7 @@ export function ExerciseDetailModal({ exercise, onClose, onEdit, onDelete }: Exe
   if (!exercise) return null;
 
   const current = exercise;
-  const embedUrl = current.video_url ? getYouTubeEmbedUrl(current.video_url) : null;
+  const video = resolveVideoSource(current.video_url);
 
   async function handleDelete() {
     if (!onDelete) return;
@@ -37,16 +37,24 @@ export function ExerciseDetailModal({ exercise, onClose, onEdit, onDelete }: Exe
 
   return (
     <Modal open onClose={onClose} title={exercise.name}>
-      {embedUrl && (
+      {video.kind === 'youtube' && video.playerUrl && (
         <div className="aspect-video mb-4 rounded-lg overflow-hidden bg-zinc-800">
           <iframe
-            src={embedUrl}
+            src={video.playerUrl}
             title={exercise.name}
             className="h-full w-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
         </div>
+      )}
+      {video.kind === 'file' && video.playerUrl && (
+        <video
+          src={video.playerUrl}
+          controls
+          playsInline
+          className="aspect-video mb-4 w-full rounded-lg bg-black"
+        />
       )}
 
       <div className="flex flex-wrap gap-1.5 mb-4">

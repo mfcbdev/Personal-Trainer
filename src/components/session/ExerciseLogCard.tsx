@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { Play } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { ActiveSetRow } from './ActiveSetRow';
-import { getYouTubeEmbedUrl, getYouTubeThumbnail } from '../../lib/youtube';
+import { resolveVideoSource } from '../../lib/video-source';
 import type { ActiveSessionExercise, SetUpdateFields } from '../../hooks/useActiveSession';
 
 interface ExerciseLogCardProps {
@@ -19,8 +20,7 @@ function parsePlannedReps(text: string | null): number | null {
 
 export function ExerciseLogCard({ item, onUpdateSet }: ExerciseLogCardProps) {
   const [videoOpen, setVideoOpen] = useState(false);
-  const thumbnail = item.exercise.video_url ? getYouTubeThumbnail(item.exercise.video_url) : null;
-  const embedUrl = item.exercise.video_url ? getYouTubeEmbedUrl(item.exercise.video_url) : null;
+  const video = resolveVideoSource(item.exercise.video_url);
 
   // Alumno can't add sets — session cardinality is fixed by the coach.
   const setCount = Math.max(item.sets ?? 1, 1);
@@ -32,10 +32,15 @@ export function ExerciseLogCard({ item, onUpdateSet }: ExerciseLogCardProps) {
       <div className="flex items-center gap-3 mb-3">
         <button
           type="button"
-          onClick={() => embedUrl && setVideoOpen(true)}
-          className="h-12 w-16 shrink-0 rounded bg-zinc-800 overflow-hidden"
+          onClick={() => video.playerUrl && setVideoOpen(true)}
+          disabled={!video.playerUrl}
+          className="h-12 w-16 shrink-0 rounded bg-zinc-800 overflow-hidden flex items-center justify-center"
         >
-          {thumbnail && <img src={thumbnail} alt="" className="h-full w-full object-cover" />}
+          {video.thumbnail ? (
+            <img src={video.thumbnail} alt="" className="h-full w-full object-cover" />
+          ) : video.kind === 'file' ? (
+            <Play size={16} className="text-zinc-400" />
+          ) : null}
         </button>
         <div className="min-w-0">
           <p className="text-sm font-medium text-zinc-50 truncate">{item.exercise.name}</p>
@@ -71,10 +76,14 @@ export function ExerciseLogCard({ item, onUpdateSet }: ExerciseLogCardProps) {
         );
       })}
 
-      {videoOpen && embedUrl && (
+      {videoOpen && video.playerUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setVideoOpen(false)}>
           <div className="w-full max-w-lg aspect-video" onClick={(e) => e.stopPropagation()}>
-            <iframe src={embedUrl} title={item.exercise.name} className="h-full w-full rounded-lg" allowFullScreen />
+            {video.kind === 'youtube' ? (
+              <iframe src={video.playerUrl} title={item.exercise.name} className="h-full w-full rounded-lg" allowFullScreen />
+            ) : (
+              <video src={video.playerUrl} controls autoPlay playsInline className="h-full w-full rounded-lg bg-black" />
+            )}
           </div>
         </div>
       )}
