@@ -78,10 +78,46 @@ export function useSessionDetail(sessionId: string | undefined) {
     await refetch();
   }
 
+  // Fields legal on each shape. Anything outside these lists is stripped
+  // before the UPDATE so a cardio row can't accidentally acquire strength
+  // fields (or vice versa) — the DB check constraint only guards
+  // exercise_id nullability, not the strength/cardio field split.
+  const STRENGTH_FIELDS = new Set<keyof SessionExerciseUpdate>([
+    'sets',
+    'reps',
+    'weight',
+    'rir_rpe',
+    'rest',
+    'notes',
+    'order_index',
+  ]);
+  const CARDIO_FIELDS = new Set<keyof SessionExerciseUpdate>([
+    'cardio_modality',
+    'total_minutes',
+    'rounds',
+    'work_seconds',
+    'rest_seconds',
+    'recovery_seconds',
+    'incline',
+    'intensity',
+    'observations',
+    'notes',
+    'order_index',
+    'completed',
+  ]);
+
   async function updateItem(id: string, fields: SessionExerciseUpdate) {
-    const { error } = await supabase.from('session_exercises').update(fields).eq('id', id);
+    const target = items.find((i) => i.id === id);
+    if (!target) return;
+    const allowed = target.item_type === 'strength' ? STRENGTH_FIELDS : CARDIO_FIELDS;
+    const safe: SessionExerciseUpdate = {};
+    for (const key of Object.keys(fields) as (keyof SessionExerciseUpdate)[]) {
+      if (allowed.has(key)) safe[key] = fields[key] as never;
+    }
+    if (Object.keys(safe).length === 0) return;
+    const { error } = await supabase.from('session_exercises').update(safe).eq('id', id);
     if (error) throw error;
-    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...fields } : item)));
+    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...safe } : item)));
   }
 
   async function removeItem(id: string) {

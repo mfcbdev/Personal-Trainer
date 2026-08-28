@@ -25,6 +25,36 @@ export interface ProgramBuilderData extends Program {
   phases: PhaseWithWeeks[];
 }
 
+/**
+ * Build the insert payload for a duplicated session_exercises row. Carries
+ * item_type + every cardio column so a source cardio item survives the copy;
+ * without this, `exercise_id=null` on a cardio row combined with the default
+ * item_type='strength' violates session_exercises_shape_check (migration 025).
+ */
+function copyItemForNewSession(ex: SessionExerciseRow, newSessionId: string) {
+  return {
+    session_id: newSessionId,
+    order_index: ex.order_index,
+    item_type: ex.item_type,
+    exercise_id: ex.exercise_id,
+    sets: ex.sets,
+    reps: ex.reps,
+    weight: ex.weight,
+    rir_rpe: ex.rir_rpe,
+    rest: ex.rest,
+    notes: ex.notes,
+    cardio_modality: ex.cardio_modality,
+    total_minutes: ex.total_minutes,
+    rounds: ex.rounds,
+    work_seconds: ex.work_seconds,
+    rest_seconds: ex.rest_seconds,
+    recovery_seconds: ex.recovery_seconds,
+    incline: ex.incline,
+    intensity: ex.intensity,
+    observations: ex.observations,
+  };
+}
+
 export function useProgramBuilder(programId: string | undefined) {
   const [data, setData] = useState<ProgramBuilderData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -142,17 +172,7 @@ export function useProgramBuilder(programId: string | undefined) {
       .eq('session_id', session.id);
 
     if (exercises && exercises.length > 0) {
-      const copies = exercises.map((ex) => ({
-        session_id: newSession.id,
-        exercise_id: ex.exercise_id,
-        order_index: ex.order_index,
-        sets: ex.sets,
-        reps: ex.reps,
-        weight: ex.weight,
-        rir_rpe: ex.rir_rpe,
-        rest: ex.rest,
-        notes: ex.notes,
-      }));
+      const copies = exercises.map((ex) => copyItemForNewSession(ex, newSession.id));
       const { error: copyError } = await supabase.from('session_exercises').insert(copies);
       if (copyError) throw copyError;
     }
@@ -199,22 +219,14 @@ export function useProgramBuilder(programId: string | undefined) {
 
     // Map source session id -> new session id by matching session_number (unique within a week).
     const newBySessionNumber = new Map(insertedSessions.map((s) => [s.session_number, s.id]));
-    const exerciseCopies = (sourceExercises ?? []).map((ex) => {
-      const sourceSession = sourceWeek.sessions.find((s) => s.id === ex.session_id);
-      const newSessionId = sourceSession ? newBySessionNumber.get(sourceSession.session_number) : null;
-      if (!newSessionId) return null;
-      return {
-        session_id: newSessionId,
-        exercise_id: ex.exercise_id,
-        order_index: ex.order_index,
-        sets: ex.sets,
-        reps: ex.reps,
-        weight: ex.weight,
-        rir_rpe: ex.rir_rpe,
-        rest: ex.rest,
-        notes: ex.notes,
-      };
-    }).filter((c): c is NonNullable<typeof c> => c !== null);
+    const exerciseCopies = (sourceExercises ?? [])
+      .map((ex) => {
+        const sourceSession = sourceWeek.sessions.find((s) => s.id === ex.session_id);
+        const newSessionId = sourceSession ? newBySessionNumber.get(sourceSession.session_number) : null;
+        if (!newSessionId) return null;
+        return copyItemForNewSession(ex, newSessionId);
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== null);
 
     if (exerciseCopies.length > 0) {
       const { error: copyError } = await supabase.from('session_exercises').insert(exerciseCopies);
