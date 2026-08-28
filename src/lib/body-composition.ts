@@ -74,11 +74,18 @@ export function calcLeanMass(weightKg: number, fatMass: number | null): number |
 
 export function ageFromBirthDate(birthDate: string | null, referenceDate = new Date()): number | null {
   if (!birthDate) return null;
-  const dob = new Date(birthDate);
-  if (Number.isNaN(dob.getTime())) return null;
-  let age = referenceDate.getFullYear() - dob.getFullYear();
-  const monthDiff = referenceDate.getMonth() - dob.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && referenceDate.getDate() < dob.getDate())) age--;
+  // Parse the YYYY-MM-DD column as a local date. `new Date("YYYY-MM-DD")`
+  // treats it as UTC midnight, so in west-of-UTC zones the resulting Date's
+  // getMonth/getDate resolve to the previous day — enough to return age-1
+  // on someone's actual birthday. Match with a local-parsed Date.
+  const dobMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthDate.trim());
+  if (!dobMatch) return null;
+  const dobYear = Number(dobMatch[1]);
+  const dobMonth = Number(dobMatch[2]) - 1;
+  const dobDay = Number(dobMatch[3]);
+  let age = referenceDate.getFullYear() - dobYear;
+  const monthDiff = referenceDate.getMonth() - dobMonth;
+  if (monthDiff < 0 || (monthDiff === 0 && referenceDate.getDate() < dobDay)) age--;
   return age;
 }
 
