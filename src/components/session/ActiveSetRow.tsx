@@ -6,6 +6,8 @@ type SetLog = Database['public']['Tables']['set_logs']['Row'];
 
 // CF = Cercanía al Fallo (1–10). Stored in the `set_logs.rpe` column — the
 // scale semantics changed but the column name is kept to avoid a migration.
+// Legacy half-step values (6.5, 7.5, …) are normalised to integers by
+// migration 026 so the current options list matches every stored value.
 const CF_OPTIONS = ['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
 interface ActiveSetRowProps {
@@ -17,21 +19,7 @@ interface ActiveSetRowProps {
 }
 
 export function ActiveSetRow({ setNumber, log, ghost, plannedReps, onUpdate }: ActiveSetRowProps) {
-  const displayReps =
-    log?.reps ?? ghost?.reps ?? plannedReps ?? null;
-
-  function handleToggleComplete() {
-    const nextCompleted = !log?.completed;
-    const fields: SetUpdateFields = { completed: nextCompleted };
-    // When the alumno marks a set complete without a stored reps value, seed
-    // the log with the planned or ghost value so volume calculations remain
-    // meaningful downstream.
-    if (nextCompleted && log?.reps == null) {
-      const fallback = ghost?.reps ?? plannedReps;
-      if (fallback != null) fields.reps = fallback;
-    }
-    onUpdate(fields);
-  }
+  const placeholder = ghost?.reps ?? plannedReps ?? null;
 
   return (
     <div
@@ -41,15 +29,22 @@ export function ActiveSetRow({ setNumber, log, ghost, plannedReps, onUpdate }: A
       )}
     >
       <span className="text-xs text-zinc-500 text-center">{setNumber}</span>
-      <span className="h-9 flex items-center justify-center text-sm text-zinc-300">
-        {displayReps ?? '-'}
-      </span>
+      <input
+        type="number"
+        inputMode="numeric"
+        value={log?.reps ?? ''}
+        placeholder={placeholder != null ? String(placeholder) : '-'}
+        onChange={(e) => onUpdate({ reps: e.target.value ? Number(e.target.value) : null })}
+        aria-label="Repeticiones realizadas"
+        className="h-9 w-full rounded-lg border border-zinc-800 bg-surface px-2 text-sm text-zinc-50 text-center placeholder:text-zinc-600 outline-none focus:border-accent"
+      />
       <input
         type="number"
         inputMode="decimal"
         value={log?.weight ?? ''}
         placeholder={ghost?.weight != null ? String(ghost.weight) : '-'}
         onChange={(e) => onUpdate({ weight: e.target.value ? Number(e.target.value) : null })}
+        aria-label="Peso (kg)"
         className="h-9 w-full rounded-lg border border-zinc-800 bg-surface px-2 text-sm text-zinc-50 text-center placeholder:text-zinc-600 outline-none focus:border-accent"
       />
       <select
@@ -66,7 +61,7 @@ export function ActiveSetRow({ setNumber, log, ghost, plannedReps, onUpdate }: A
       </select>
       <button
         type="button"
-        onClick={handleToggleComplete}
+        onClick={() => onUpdate({ completed: !log?.completed })}
         aria-label="Marcar set completado"
         className={cn(
           'h-9 w-9 rounded-lg flex items-center justify-center border',

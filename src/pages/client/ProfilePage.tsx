@@ -39,6 +39,7 @@ function Shortcut({ to, icon: Icon, title, subtitle }: ShortcutProps) {
 
 const passwordSchema = z
   .object({
+    currentPassword: z.string().min(1, 'Ingresa tu contraseña actual'),
     password: z.string().min(8, 'Mínimo 8 caracteres'),
     confirm: z.string(),
   })
@@ -69,11 +70,25 @@ export default function ProfilePage() {
   } = useForm<PasswordInput>({ resolver: zodResolver(passwordSchema) });
 
   async function onPasswordSubmit(values: PasswordInput) {
+    if (!profile?.email) {
+      showError('No se pudo determinar tu correo. Vuelve a iniciar sesión.');
+      return;
+    }
     setSubmitting(true);
     try {
+      // Reauth with the current password before updating — supabase.auth
+      // .updateUser({ password }) succeeds on any active session, so without
+      // this step an unattended tab (or XSS) could rotate the password.
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email: profile.email,
+        password: values.currentPassword,
+      });
+      if (reauthError) {
+        throw new Error('Contraseña actual incorrecta.');
+      }
       const { error } = await supabase.auth.updateUser({ password: values.password });
       if (error) throw error;
-      reset({ password: '', confirm: '' });
+      reset({ currentPassword: '', password: '', confirm: '' });
       showSuccess('Contraseña actualizada.');
     } catch (error) {
       showError(error instanceof Error ? error.message : 'No se pudo actualizar la contraseña.');
@@ -127,6 +142,13 @@ export default function ProfilePage() {
         <Card>
           <h3 className="text-xs font-medium text-zinc-500 uppercase mb-3">Cambiar contraseña</h3>
           <form className="space-y-3" onSubmit={handleSubmit(onPasswordSubmit)} noValidate>
+            <div>
+              <label className="block text-sm text-zinc-400 mb-1.5">Contraseña actual</label>
+              <Input type="password" autoComplete="current-password" {...register('currentPassword')} />
+              {errors.currentPassword && (
+                <p className="mt-1 text-xs text-red-400">{errors.currentPassword.message}</p>
+              )}
+            </div>
             <div>
               <label className="block text-sm text-zinc-400 mb-1.5">Nueva contraseña</label>
               <Input type="password" autoComplete="new-password" {...register('password')} />

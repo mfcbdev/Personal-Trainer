@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { getCurrentWeekStart, toISODate } from '../lib/scheduling';
+import { getCurrentWeekStart, parseLocalDate, toISODate } from '../lib/scheduling';
 import { addDays } from 'date-fns';
 
 export interface WeightPoint {
@@ -137,21 +137,30 @@ export function useClientProgress() {
       .eq('completed', true)
       .eq('weeks.phases.programs.client_id', user.id);
 
-    const weekBuckets: WeeklyVolumeComparison[] = [0, 1, 2, 3].map((offset) => {
-      const start = addDays(fourWeeksBackStart, offset * 7);
-      return {
-        label: `S${offset + 1}`,
-        weekStartIso: toISODate(start),
-        byMuscle: {},
-      };
-    });
+    // Precompute each bucket's [startIso, endIso) once — avoid per-row Date
+    // math inside the find(). Use parseLocalDate so the upper bound doesn't
+    // slip a day in west-of-UTC (which drops last-day sessions from the chart).
+    const bucketRanges: { label: string; weekStartIso: string; endIso: string }[] = [0, 1, 2, 3].map(
+      (offset) => {
+        const start = addDays(fourWeeksBackStart, offset * 7);
+        const startIso = toISODate(start);
+        const endIso = toISODate(addDays(parseLocalDate(startIso), 7));
+        return { label: `S${offset + 1}`, weekStartIso: startIso, endIso };
+      },
+    );
+    const weekBuckets: WeeklyVolumeComparison[] = bucketRanges.map((r) => ({
+      label: r.label,
+      weekStartIso: r.weekStartIso,
+      byMuscle: {},
+    }));
 
     for (const session of (comparisonSessions ?? []) as unknown as WeeklyComparisonRow[]) {
       if (!session.scheduled_date) continue;
-      const bucket = weekBuckets.find(
-        (b) => session.scheduled_date >= b.weekStartIso && session.scheduled_date < toISODate(addDays(new Date(b.weekStartIso), 7)),
+      const bucketIndex = bucketRanges.findIndex(
+        (b) => session.scheduled_date >= b.weekStartIso && session.scheduled_date < b.endIso,
       );
-      if (!bucket) continue;
+      if (bucketIndex < 0) continue;
+      const bucket = weekBuckets[bucketIndex];
       for (const item of session.session_exercises ?? []) {
         const mg = item.exercise?.muscle_group;
         if (!mg) continue;
@@ -160,15 +169,18 @@ export function useClientProgress() {
     }
     setWeeklyComparison(weekBuckets);
 
-    // --- Base-exercise progression from set_logs.
+    // --- Base-exercise progression from set_logs. Restrict to sessions the
+    // alumno has finished — a set-log flipped `completed` during an in-flight
+    // workout otherwise skews firstMaxWeight and deltaPct with warm-ups.
     const { data: logs } = await supabase
       .from('set_logs')
       .select(
         'weight, reps, ' +
-          'session_exercises!inner(exercise_id, sessions!inner(completed_at, weeks!inner(phases!inner(programs!inner(client_id)))), exercises:exercises!inner(name, muscle_group))',
+          'session_exercises!inner(exercise_id, sessions!inner(completed, completed_at, weeks!inner(phases!inner(programs!inner(client_id)))), exercises:exercises!inner(name, muscle_group))',
       )
       .eq('completed', true)
       .not('weight', 'is', null)
+      .eq('session_exercises.sessions.completed', true)
       .eq('session_exercises.sessions.weeks.phases.programs.client_id', user.id);
 
     type Aggregate = {
