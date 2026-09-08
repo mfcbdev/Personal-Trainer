@@ -27,6 +27,7 @@ export interface Database {
           birth_date: string | null;
           objectives: string | null;
           onboarding_completed: boolean;
+          last_seen_at: string | null;
           created_at: string;
         };
         Insert: Partial<Database['public']['Tables']['profiles']['Row']> & { id: string; role: UserRole };

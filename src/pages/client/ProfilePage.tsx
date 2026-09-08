@@ -12,6 +12,7 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
+import { useMeasurements } from '../../hooks/useMeasurements';
 import { supabase } from '../../lib/supabase';
 
 interface ShortcutProps {
@@ -58,9 +59,14 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
 }
 
 export default function ProfilePage() {
-  const { profile, signOut } = useAuth();
+  const { profile, user, signOut } = useAuth();
   const { showSuccess, showError } = useToast();
+  const { measurements } = useMeasurements(user?.id);
   const [submitting, setSubmitting] = useState(false);
+
+  // useMeasurements returns rows ordered by measured_at ASC, so [0] is the
+  // earliest weigh-in we have on record.
+  const initialWeightKg = measurements.find((m) => m.weight != null)?.weight ?? null;
 
   const {
     register,
@@ -115,6 +121,10 @@ export default function ProfilePage() {
           <InfoRow label="Sexo" value={profile?.sex} />
           <InfoRow label="Fecha de nacimiento" value={profile?.birth_date} />
           <InfoRow label="Fecha de ingreso" value={memberSince} />
+          <InfoRow
+            label="Peso inicial"
+            value={initialWeightKg != null ? `${initialWeightKg} kg` : null}
+          />
         </Card>
 
         {profile?.objectives && (

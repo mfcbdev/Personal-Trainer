@@ -10,13 +10,15 @@ import type { GrowPhase } from '../lib/constants';
 export interface ClientDashboardEntry {
   client: ClientProfile;
   activePhase: GrowPhase | null;
-  lastActivity: string | null; // ISO
+  lastActivity: string | null; // ISO — most recent completed session
   daysSinceLastActivity: number | null;
+  lastSeenAt: string | null; // ISO — last time the alumno opened the app
   sessionsCompletedThisWeek: number;
   sessionsScheduledThisWeek: number;
   adherencePct: number; // 0-100
   hasWeeklyTracking: boolean;
   isInDeloadWeek: boolean;
+  alertCount: number;
 }
 
 export type AlertKind = 'inactive' | 'missing_tracking' | 'deload';
@@ -116,6 +118,12 @@ export function useTrainerDashboard() {
     const trackingClientIds = new Set((trackingRows ?? []).map((r) => r.client_id));
 
     const nextAlerts: DashboardAlert[] = [];
+    const alertsByClient = new Map<string, number>();
+    function pushAlert(alert: DashboardAlert) {
+      nextAlerts.push(alert);
+      alertsByClient.set(alert.clientId, (alertsByClient.get(alert.clientId) ?? 0) + 1);
+    }
+
     const nextEntries: ClientDashboardEntry[] = clients.map((client) => {
       const stats = byClient.get(client.id);
       const lastActivity = lastByClient.get(client.id) ?? null;
@@ -128,7 +136,7 @@ export function useTrainerDashboard() {
       const activePhase = stats?.phase ?? null;
 
       if (daysSince != null && daysSince >= INACTIVE_THRESHOLD_DAYS) {
-        nextAlerts.push({
+        pushAlert({
           clientId: client.id,
           clientName: client.full_name ?? 'Cliente',
           kind: 'inactive',
@@ -136,7 +144,7 @@ export function useTrainerDashboard() {
         });
       }
       if (scheduled > 0 && !hasTracking) {
-        nextAlerts.push({
+        pushAlert({
           clientId: client.id,
           clientName: client.full_name ?? 'Cliente',
           kind: 'missing_tracking',
@@ -144,7 +152,7 @@ export function useTrainerDashboard() {
         });
       }
       if (isDeload) {
-        nextAlerts.push({
+        pushAlert({
           clientId: client.id,
           clientName: client.full_name ?? 'Cliente',
           kind: 'deload',
@@ -157,11 +165,13 @@ export function useTrainerDashboard() {
         activePhase,
         lastActivity,
         daysSinceLastActivity: daysSince,
+        lastSeenAt: client.last_seen_at,
         sessionsCompletedThisWeek: completed,
         sessionsScheduledThisWeek: scheduled,
         adherencePct,
         hasWeeklyTracking: hasTracking,
         isInDeloadWeek: isDeload,
+        alertCount: alertsByClient.get(client.id) ?? 0,
       };
     });
 

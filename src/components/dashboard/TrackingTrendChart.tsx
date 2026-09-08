@@ -11,6 +11,8 @@ export function TrackingTrendChart({ rows }: { rows: WeeklyTracking[] }) {
     weight: r.weight,
     fatigue: r.fatigue,
     motivation: r.motivation,
+    energy: r.energy,
+    mood: r.mood,
   }));
 
   return (
@@ -29,6 +31,8 @@ export function TrackingTrendChart({ rows }: { rows: WeeklyTracking[] }) {
           <Line yAxisId="left" type="monotone" dataKey="weight" name="Peso" stroke="#22c55e" strokeWidth={2} dot={{ r: 3 }} />
           <Line yAxisId="right" type="monotone" dataKey="fatigue" name="Cansancio" stroke="#f97316" strokeWidth={2} dot={{ r: 3 }} />
           <Line yAxisId="right" type="monotone" dataKey="motivation" name="Motivación" stroke="#38bdf8" strokeWidth={2} dot={{ r: 3 }} />
+          <Line yAxisId="right" type="monotone" dataKey="energy" name="Energía" stroke="#eab308" strokeWidth={2} dot={{ r: 3 }} />
+          <Line yAxisId="right" type="monotone" dataKey="mood" name="Ánimo" stroke="#a78bfa" strokeWidth={2} dot={{ r: 3 }} />
         </LineChart>
       </ResponsiveContainer>
     </div>
