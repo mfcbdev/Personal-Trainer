@@ -56,6 +56,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     setProfile(data);
+    // Fire-and-forget touch of last_seen_at so the coach's client list can
+    // show "última conexión". Ignored on failure — RLS lets a user update
+    // their own row via the existing profiles_update policy.
+    if (data) {
+      void supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', userId);
+    }
   }, []);
 
   useEffect(() => {
