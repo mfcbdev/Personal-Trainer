@@ -12,6 +12,7 @@ import { MeasurementList } from '../../components/measurements/MeasurementList';
 import { TrackingTrendChart } from '../../components/dashboard/TrackingTrendChart';
 import { HRZonesTable } from '../../components/dashboard/HRZonesTable';
 import { HRTargetTable } from '../../components/dashboard/HRTargetTable';
+import { PhotoGallery } from '../../components/progress/PhotoGallery';
 import { useClient } from '../../hooks/useClients';
 import { useClientPrograms } from '../../hooks/usePrograms';
 import { useMeasurements } from '../../hooks/useMeasurements';
@@ -19,7 +20,7 @@ import { useClientTrackingHistory } from '../../hooks/useClientTrackingHistory';
 import { useCardioEvaluation } from '../../hooks/useCardioEvaluation';
 import { PROGRAM_TEMPLATE_LABELS } from '../../lib/constants';
 
-const TABS = ['overview', 'program', 'measurements', 'tracking', 'zones'] as const;
+const TABS = ['overview', 'program', 'measurements', 'tracking', 'photos', 'zones'] as const;
 type Tab = (typeof TABS)[number];
 
 const TAB_LABELS: Record<Tab, string> = {
@@ -27,6 +28,7 @@ const TAB_LABELS: Record<Tab, string> = {
   program: 'Programa',
   measurements: 'Mediciones',
   tracking: 'Seguimiento',
+  photos: 'Fotos',
   zones: 'Zonas FC',
 };
 
@@ -146,6 +148,12 @@ export default function ClientDetail() {
         <Card>
           <h3 className="text-xs font-medium text-zinc-500 uppercase mb-3">Peso, cansancio y motivación</h3>
           {trackingLoading ? <Skeleton className="h-48" /> : <TrackingTrendChart rows={trackingRows} />}
+        </Card>
+      )}
+
+      {tab === 'photos' && id && (
+        <Card>
+          <PhotoGallery clientId={id} canEdit={false} />
         </Card>
       )}
 
