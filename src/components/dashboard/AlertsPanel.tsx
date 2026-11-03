@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { AlertTriangle, CalendarX, RotateCcw } from 'lucide-react';
+import { AlertTriangle, CalendarX, MessageCircle, RotateCcw } from 'lucide-react';
 import { Card } from '../ui/Card';
 import type { DashboardAlert, AlertKind } from '../../hooks/useTrainerDashboard';
 
@@ -7,12 +7,14 @@ const ICONS: Record<AlertKind, typeof AlertTriangle> = {
   inactive: AlertTriangle,
   missing_tracking: CalendarX,
   deload: RotateCcw,
+  unread_messages: MessageCircle,
 };
 
 const TONES: Record<AlertKind, string> = {
   inactive: 'text-amber-400',
   missing_tracking: 'text-sky-400',
   deload: 'text-fuchsia-400',
+  unread_messages: 'text-accent',
 };
 
 export function AlertsPanel({ alerts }: { alerts: DashboardAlert[] }) {
@@ -29,12 +31,13 @@ export function AlertsPanel({ alerts }: { alerts: DashboardAlert[] }) {
       <ul className="divide-y divide-zinc-800">
         {alerts.map((alert, i) => {
           const Icon = ICONS[alert.kind];
+          const href =
+            alert.kind === 'unread_messages'
+              ? `/t/clients/${alert.clientId}?tab=messages`
+              : `/t/clients/${alert.clientId}`;
           return (
             <li key={`${alert.clientId}-${alert.kind}-${i}`}>
-              <Link
-                to={`/t/clients/${alert.clientId}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800/60"
-              >
+              <Link to={href} className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800/60">
                 <Icon size={18} className={TONES[alert.kind]} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-zinc-50 truncate">{alert.clientName}</p>

@@ -365,6 +365,23 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['progress_photos']['Row']>;
         Relationships: [];
       };
+      messages: {
+        Row: {
+          id: string;
+          client_id: string;
+          sender_id: string;
+          body: string;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database['public']['Tables']['messages']['Row']> & {
+          client_id: string;
+          sender_id: string;
+          body: string;
+        };
+        Update: Partial<Database['public']['Tables']['messages']['Row']>;
+        Relationships: [];
+      };
       hr_zones: {
         Row: {
           id: string;

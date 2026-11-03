@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Copy, Plus } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ProgramCreateModal } from '../../components/programs/ProgramCreateModal';
+import { ProgramDuplicateModal } from '../../components/programs/ProgramDuplicateModal';
+import { MessageThread } from '../../components/messages/MessageThread';
 import { MeasurementFormModal } from '../../components/measurements/MeasurementFormModal';
 import { MeasurementList } from '../../components/measurements/MeasurementList';
 import { TrackingTrendChart } from '../../components/dashboard/TrackingTrendChart';
@@ -14,13 +16,13 @@ import { HRZonesTable } from '../../components/dashboard/HRZonesTable';
 import { HRTargetTable } from '../../components/dashboard/HRTargetTable';
 import { PhotoGallery } from '../../components/progress/PhotoGallery';
 import { useClient } from '../../hooks/useClients';
-import { useClientPrograms } from '../../hooks/usePrograms';
+import { useClientPrograms, type Program } from '../../hooks/usePrograms';
 import { useMeasurements } from '../../hooks/useMeasurements';
 import { useClientTrackingHistory } from '../../hooks/useClientTrackingHistory';
 import { useCardioEvaluation } from '../../hooks/useCardioEvaluation';
 import { PROGRAM_TEMPLATE_LABELS } from '../../lib/constants';
 
-const TABS = ['overview', 'program', 'measurements', 'tracking', 'photos', 'zones'] as const;
+const TABS = ['overview', 'program', 'measurements', 'tracking', 'photos', 'messages', 'zones'] as const;
 type Tab = (typeof TABS)[number];
 
 const TAB_LABELS: Record<Tab, string> = {
@@ -29,6 +31,7 @@ const TAB_LABELS: Record<Tab, string> = {
   measurements: 'Mediciones',
   tracking: 'Seguimiento',
   photos: 'Fotos',
+  messages: 'Mensajes',
   zones: 'Zonas FC',
 };
 
@@ -41,13 +44,15 @@ const STATUS_LABELS: Record<string, string> = {
 export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { client, loading: clientLoading } = useClient(id);
-  const { programs, loading: programsLoading, createProgram } = useClientPrograms(id);
+  const { programs, loading: programsLoading, createProgram, duplicateProgram } = useClientPrograms(id);
   const { measurements, loading: measurementsLoading, createMeasurement, deleteMeasurement } = useMeasurements(id);
   const { rows: trackingRows, loading: trackingLoading } = useClientTrackingHistory(id);
   const { evaluation, loading: evalLoading, refetch: refetchEval } = useCardioEvaluation(id);
-  const [tab, setTab] = useState<Tab>('overview');
+  const [tab, setTab] = useState<Tab>(() => TABS.find((t) => t === searchParams.get('tab')) ?? 'overview');
   const [createOpen, setCreateOpen] = useState(false);
+  const [duplicateSource, setDuplicateSource] = useState<Program | null>(null);
   const [measurementOpen, setMeasurementOpen] = useState(false);
 
   return (
@@ -100,32 +105,41 @@ export default function ClientDetail() {
           ) : (
             <div className="space-y-3">
               {programs.map((program) => (
-                <button
+                <Card
                   key={program.id}
-                  type="button"
-                  onClick={() => navigate(`/t/clients/${id}/program/${program.id}`)}
-                  className="w-full text-left"
+                  className="flex items-center gap-3 hover:ring-1 hover:ring-zinc-700 transition-shadow"
                 >
-                  <Card className="flex items-center justify-between hover:ring-1 hover:ring-zinc-700 transition-shadow">
-                    <div>
-                      <p className="text-sm font-medium text-zinc-50">{program.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-xs text-zinc-500">Inicio: {program.start_date}</p>
-                        {program.template_type && (
-                          <span className="text-xs text-zinc-500">·</span>
-                        )}
-                        {program.template_type && (
-                          <p className="text-xs text-zinc-400">
-                            {PROGRAM_TEMPLATE_LABELS[program.template_type]}
-                          </p>
-                        )}
-                      </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/t/clients/${id}/program/${program.id}`)}
+                    className="flex-1 min-w-0 text-left"
+                  >
+                    <p className="text-sm font-medium text-zinc-50 truncate">{program.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-zinc-500">Inicio: {program.start_date}</p>
+                      {program.template_type && (
+                        <span className="text-xs text-zinc-500">·</span>
+                      )}
+                      {program.template_type && (
+                        <p className="text-xs text-zinc-400">
+                          {PROGRAM_TEMPLATE_LABELS[program.template_type]}
+                        </p>
+                      )}
                     </div>
-                    <Badge variant={program.status === 'active' ? 'accent' : 'default'}>
-                      {STATUS_LABELS[program.status]}
-                    </Badge>
-                  </Card>
-                </button>
+                  </button>
+                  <Badge variant={program.status === 'active' ? 'accent' : 'default'}>
+                    {STATUS_LABELS[program.status]}
+                  </Badge>
+                  <button
+                    type="button"
+                    onClick={() => setDuplicateSource(program)}
+                    aria-label={`Duplicar ${program.name}`}
+                    title="Duplicar o reutilizar para otro alumno"
+                    className="h-11 w-11 -mr-2 shrink-0 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800"
+                  >
+                    <Copy size={18} />
+                  </button>
+                </Card>
               ))}
             </div>
           )}
@@ -157,6 +171,12 @@ export default function ClientDetail() {
         </Card>
       )}
 
+      {tab === 'messages' && id && (
+        <Card>
+          <MessageThread clientId={id} emptyHint="Aún no hay mensajes con este alumno." />
+        </Card>
+      )}
+
       {tab === 'zones' && client && (
         evalLoading ? (
           <Skeleton className="h-48" />
@@ -181,6 +201,18 @@ export default function ClientDetail() {
           onCreated={(program) => {
             setCreateOpen(false);
             navigate(`/t/clients/${id}/program/${program.id}`);
+          }}
+        />
+      )}
+
+      {duplicateSource && (
+        <ProgramDuplicateModal
+          source={duplicateSource}
+          onClose={() => setDuplicateSource(null)}
+          onDuplicate={duplicateProgram}
+          onDuplicated={(program) => {
+            setDuplicateSource(null);
+            navigate(`/t/clients/${program.client_id}/program/${program.id}`);
           }}
         />
       )}

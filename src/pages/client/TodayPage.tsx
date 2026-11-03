@@ -6,6 +6,7 @@ import { AdherenceBar } from '../../components/client/AdherenceBar';
 import { useAuth } from '../../contexts/AuthContext';
 import { useActiveProgram } from '../../hooks/useActiveProgram';
 import { useSessionDetail } from '../../hooks/useSessionDetail';
+import { useUnreadMessageCount } from '../../hooks/useMessages';
 import { flattenSessions, todayISODate } from '../../lib/program-utils';
 import { getCurrentWeekStart, estimateSessionMinutes } from '../../lib/scheduling';
 
@@ -18,14 +19,15 @@ function firstName(fullName: string | null | undefined): string {
 
 export default function TodayPage() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const { data, loading, hasActiveProgram } = useActiveProgram();
+  const unread = useUnreadMessageCount(user?.id);
 
   const name = firstName(profile?.full_name);
 
   return (
     <div>
-      <Header name={name} />
+      <Header name={name} unread={unread} onOpenMessages={() => navigate('/c/messages')} />
 
       {loading || !data ? (
         <Skeleton className="h-40 mb-5" />
@@ -51,7 +53,7 @@ export default function TodayPage() {
   );
 }
 
-function Header({ name }: { name: string }) {
+function Header({ name, unread, onOpenMessages }: { name: string; unread: number; onOpenMessages: () => void }) {
   return (
     <div className="flex items-start justify-between mb-6">
       <div>
@@ -62,10 +64,14 @@ function Header({ name }: { name: string }) {
       </div>
       <button
         type="button"
-        aria-label="Notificaciones"
-        className="h-10 w-10 rounded-full bg-surface flex items-center justify-center text-zinc-300 border border-zinc-800"
+        onClick={onOpenMessages}
+        aria-label={unread > 0 ? `Mensajes, ${unread} sin leer` : 'Mensajes'}
+        className="relative h-11 w-11 rounded-full bg-surface flex items-center justify-center text-zinc-300 border border-zinc-800"
       >
         <Bell size={16} />
+        {unread > 0 && (
+          <span aria-hidden="true" className="absolute top-2 right-2.5 h-2 w-2 rounded-full bg-red-500" />
+        )}
       </button>
     </div>
   );
