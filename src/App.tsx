@@ -34,6 +34,7 @@ import ProgramPage from './pages/client/ProgramPage';
 import SessionPage from './pages/client/SessionPage';
 import ProfilePage from './pages/client/ProfilePage';
 import ExercisesPage from './pages/client/ExercisesPage';
+import MessagesPage from './pages/client/MessagesPage';
 
 // Lazy split the recharts-heavy pages so the initial bundle stays lean.
 const ProgressPage = lazy(() => import('./pages/client/ProgressPage'));
@@ -91,6 +92,7 @@ function App() {
                     <Route path="progress" element={<ProgressPage />} />
                     <Route path="tracking" element={<TrackingPage />} />
                     <Route path="exercises" element={<ExercisesPage />} />
+                    <Route path="messages" element={<MessagesPage />} />
                     <Route path="profile" element={<ProfilePage />} />
                   </Route>
                 </Route>

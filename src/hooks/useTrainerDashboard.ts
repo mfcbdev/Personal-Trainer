@@ -21,7 +21,7 @@ export interface ClientDashboardEntry {
   alertCount: number;
 }
 
-export type AlertKind = 'inactive' | 'missing_tracking' | 'deload';
+export type AlertKind = 'inactive' | 'missing_tracking' | 'deload' | 'unread_messages';
 
 export interface DashboardAlert {
   clientId: string;
@@ -62,7 +62,7 @@ export function useTrainerDashboard() {
     const weekStartIso = toISODate(weekStart);
     const weekEndIso = toISODate(weekEnd);
 
-    const [{ data: sessionsThisWeek }, { data: lastActivities }, { data: trackingRows }] = await Promise.all([
+    const [{ data: sessionsThisWeek }, { data: lastActivities }, { data: trackingRows }, { data: unreadRows }] = await Promise.all([
       supabase
         .from('sessions')
         .select('id, completed, scheduled_date, weeks!inner(is_deload, phases!inner(type, programs!inner(client_id, status)))')
@@ -81,7 +81,18 @@ export function useTrainerDashboard() {
         .select('client_id')
         .eq('week_start_date', weekStartIso)
         .in('client_id', clientIds),
+      supabase
+        .from('messages')
+        .select('client_id')
+        .is('read_at', null)
+        .neq('sender_id', user.id)
+        .in('client_id', clientIds),
     ]);
+
+    const unreadByClient = new Map<string, number>();
+    for (const row of unreadRows ?? []) {
+      unreadByClient.set(row.client_id, (unreadByClient.get(row.client_id) ?? 0) + 1);
+    }
 
     const now = new Date();
 
@@ -157,6 +168,15 @@ export function useTrainerDashboard() {
           clientName: client.full_name ?? 'Cliente',
           kind: 'deload',
           detail: 'Semana de deload',
+        });
+      }
+      const unread = unreadByClient.get(client.id) ?? 0;
+      if (unread > 0) {
+        pushAlert({
+          clientId: client.id,
+          clientName: client.full_name ?? 'Cliente',
+          kind: 'unread_messages',
+          detail: unread === 1 ? '1 mensaje sin leer' : `${unread} mensajes sin leer`,
         });
       }
 

@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom';
-import { Home, Calendar, LineChart, User, ClipboardList, Dumbbell } from 'lucide-react';
+import { Home, Calendar, LineChart, User, ClipboardList, Dumbbell, MessageCircle } from 'lucide-react';
 import { BottomNav } from './BottomNav';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -15,6 +15,7 @@ const sidebarItems = [
   ...navItems,
   { to: '/c/exercises', label: 'Ejercicios', icon: Dumbbell },
   { to: '/c/tracking', label: 'Seguimiento', icon: ClipboardList },
+  { to: '/c/messages', label: 'Mensajes', icon: MessageCircle },
 ];
 
 export function ClientShell() {
