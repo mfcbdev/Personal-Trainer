@@ -31,7 +31,7 @@ export interface ProgramBuilderData extends Program {
  * without this, `exercise_id=null` on a cardio row combined with the default
  * item_type='strength' violates session_exercises_shape_check (migration 025).
  */
-function copyItemForNewSession(ex: SessionExerciseRow, newSessionId: string) {
+export function copyItemForNewSession(ex: SessionExerciseRow, newSessionId: string) {
   return {
     session_id: newSessionId,
     order_index: ex.order_index,
